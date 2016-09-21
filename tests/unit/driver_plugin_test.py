@@ -11,9 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import json
-import socket
 import unittest
+import requests
+import socket
+import time
 
 from unittest import skip
 from mock import patch, ANY, call
@@ -32,11 +35,23 @@ TEST_NETWORK_ID = "TEST_NETWORK_ID"
 
 hostname = socket.gethostname()
 
+HOST = os.environ.get('PLUGIN_SERVER_HOST', 'plugin')
+PORT = int(os.environ.get('PLUGIN_SERVER_PORT', 9000))
+PLUGIN_SERVER_URL = 'http://{}:{}'.format(HOST, PORT)
+
 
 class TestPlugin(unittest.TestCase):
-
     def setUp(self):
         self.app = driver_plugin.app.test_client()
+
+        # Wait till the plugin starts.
+        while True:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex((HOST, PORT))
+            sock.close()
+            if result == 0:
+                return
+            time.sleep(1)
 
     def tearDown(self):
         pass
@@ -46,9 +61,9 @@ class TestPlugin(unittest.TestCase):
         assert_equal(rv.status_code, 404)
 
     def test_activate(self):
-        rv = self.app.post('/Plugin.Activate')
+        response = requests.post('{}/Plugin.Activate'.format(PLUGIN_SERVER_URL))
         activate_response = {"Implements": ["NetworkDriver", "IpamDriver"]}
-        self.assertDictEqual(json.loads(rv.data), activate_response)
+        self.assertDictEqual(response.json(), activate_response)
 
     def test_get_default_address_spaces(self):
         """
