@@ -10,7 +10,9 @@ import (
 	"github.com/libnetwork-plugin/libnetwork-go/handlers"
 )
 
-var serverPort string
+var (
+	serverPort string
+)
 
 func init() {
 	serverPort = os.Getenv("PLUGIN_SERVER_PORT")
@@ -29,6 +31,7 @@ func main() {
 	e.POST("/Plugin.Activate", handlers.PluginActivateHandler)
 	e.POST("/IpamDriver.GetDefaultAddressSpaces", handlers.IPAMDriverGetDefaultAddressSpaces)
 	e.POST("/IpamDriver.RequestPool", handlers.IPAMDriverRequestPool)
+	e.POST("/IpamDriver.ReleasePool", handlers.IPAMDriverReleasePool)
 
 	e.Run(standard.New(fmt.Sprintf(":%v", serverPort)))
 }
