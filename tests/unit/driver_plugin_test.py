@@ -61,9 +61,9 @@ class TestPlugin(unittest.TestCase):
         assert_equal(rv.status_code, 404)
 
     def test_activate(self):
-        response = requests.post('{}/Plugin.Activate'.format(PLUGIN_SERVER_URL))
+        rv = self.app.post('/Plugin.Activate')
         activate_response = {"Implements": ["NetworkDriver", "IpamDriver"]}
-        self.assertDictEqual(response.json(), activate_response)
+        self.assertDictEqual(json.loads(rv.data), activate_response)
 
     def test_get_default_address_spaces(self):
         """

@@ -18,7 +18,7 @@ tests:
     - ./:/code
   links:
     - plugin:plugin
-  command: "nosetests tests.unit.driver_plugin_test -c nose.cfg"
+  command: "nosetests tests.unit.godriver_plugin_test -c nose.cfg"
   environment:
     - PLUGIN_SERVER_HOST=plugin
     - PLUGIN_SERVER_PORT=9000
