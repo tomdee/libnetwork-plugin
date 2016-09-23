@@ -20,4 +20,9 @@ type (
 		PoolID, Pool string
 		Data map[string]string
 	}
+
+	IPAMDriverRequestAddressResponse struct {
+		Address string
+		Data map[string]string
+	}
 )

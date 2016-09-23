@@ -32,6 +32,7 @@ func main() {
 	e.POST("/IpamDriver.GetDefaultAddressSpaces", handlers.IPAMDriverGetDefaultAddressSpaces)
 	e.POST("/IpamDriver.RequestPool", handlers.IPAMDriverRequestPool)
 	e.POST("/IpamDriver.ReleasePool", handlers.IPAMDriverReleasePool)
+	e.POST("/IpamDriver.RequestAddress", handlers.IPAMDriverRequestAddress)
 
 	e.Run(standard.New(fmt.Sprintf(":%v", serverPort)))
 }
