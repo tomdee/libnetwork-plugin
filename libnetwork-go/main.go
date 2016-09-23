@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/labstack/echo"
@@ -29,10 +28,13 @@ func main() {
 	})
 
 	e.POST("/Plugin.Activate", handlers.PluginActivateHandler)
+
+	// IPAM driver endpoints.
 	e.POST("/IpamDriver.GetDefaultAddressSpaces", handlers.IPAMDriverGetDefaultAddressSpaces)
 	e.POST("/IpamDriver.RequestPool", handlers.IPAMDriverRequestPool)
 	e.POST("/IpamDriver.ReleasePool", handlers.IPAMDriverReleasePool)
 	e.POST("/IpamDriver.RequestAddress", handlers.IPAMDriverRequestAddress)
+	e.POST("/IpamDriver.ReleaseAddress", handlers.IPAMDriverReleaseAddress)
 
-	e.Run(standard.New(fmt.Sprintf(":%v", serverPort)))
+	e.Run(standard.New(serverPort))
 }

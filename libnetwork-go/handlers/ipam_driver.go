@@ -254,7 +254,7 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 		logger.Error(message)
 		return errors.Error(c, message)
 	}
-	
+
 	_, ipNet, err := caliconet.ParseCIDR(fmt.Sprint(IPs[0]))
 
 	// Return the IP as a CIDR.
@@ -263,6 +263,36 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 	}
 
 	utils.LogJSONMessage(logger, "RequestAddress response JSON=%s", resp)
+
+	return c.JSON(http.StatusAccepted, resp)
+}
+
+func IPAMDriverReleaseAddress(c echo.Context) error {
+	clientContext := c.(*context.ClientContext)
+	client := clientContext.Client()
+	logger := clientContext.Logger()
+
+	request := &struct {
+		Address string
+	}{}
+	clientContext.Bind(request)
+	utils.LogJSONMessage(logger, "ReleaseAddress JSON=%s", request)
+
+	ip := caliconet.IP{net.ParseIP(request.Address)}
+
+	// Unassign the address.  This handles the address already being unassigned
+	// in which case it is a no-op.  The release_ips call may raise a
+	// RuntimeError if there are repeated clashing updates to the same IP block,
+	// this is not an expected condition.
+	_, err := client.IPAM().ReleaseIPs([]caliconet.IP{ip})
+	if err != nil {
+		logger.Error(err)
+		errors.Error(c, err.Error())
+	}
+
+	resp := map[string]string{}
+
+	utils.LogJSONMessage(logger, "ReleaseAddress response JSON=%s", resp)
 
 	return c.JSON(http.StatusAccepted, resp)
 }
