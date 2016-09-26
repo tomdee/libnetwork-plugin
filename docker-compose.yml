@@ -1,5 +1,5 @@
 plugin:
-  image: golang:1.6
+  image: golang:1.7.1
   working_dir: /go/src/github.com/libnetwork-plugin/libnetwork-go
   command: /bin/bash -c "go run main.go"
   volumes:

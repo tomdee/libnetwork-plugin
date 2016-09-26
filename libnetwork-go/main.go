@@ -9,16 +9,25 @@ import (
 	"github.com/libnetwork-plugin/libnetwork-go/handlers"
 )
 
+const (
+	defaultServerPort = "9000"
+)
+
 var (
 	serverPort string
 )
 
 func init() {
 	serverPort = os.Getenv("PLUGIN_SERVER_PORT")
+	if serverPort == "" {
+		serverPort = defaultServerPort
+	}
 }
 
 func main() {
 	e := echo.New()
+
+	e.Logger().Printf("Running on port %v...", serverPort)
 
 	e.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -36,5 +45,12 @@ func main() {
 	e.POST("/IpamDriver.RequestAddress", handlers.IPAMDriverRequestAddress)
 	e.POST("/IpamDriver.ReleaseAddress", handlers.IPAMDriverReleaseAddress)
 
-	e.Run(standard.New(serverPort))
+	err := e.Run(standard.New(":" + serverPort))
+
+	if err != nil {
+		e.Logger().Printf("%v\n", err)
+		return
+	}
+
+	e.Logger().Print("Exiting.")
 }
