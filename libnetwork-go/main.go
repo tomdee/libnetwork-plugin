@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/docker/go-plugins-helpers/network"
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
