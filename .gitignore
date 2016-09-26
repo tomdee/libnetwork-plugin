@@ -19,5 +19,4 @@ calico-node-libnetwork.tgz
 calico-node.tgz
 calicoctl
 docker
-libnetwork-go/vendor/*
 
