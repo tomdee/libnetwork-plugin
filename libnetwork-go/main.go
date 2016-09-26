@@ -27,5 +27,6 @@ func init() {
 func main() {
 	h := network.NewHandler(driver.CalicoDriver{})
 	err := h.ServeTCP("calico-net", fmt.Sprintf(":%v", serverPort))
+	h.ServeUnix("root", "calico")
 	log.Fatal(err)
 }
