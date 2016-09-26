@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
-	"github.com/libnetwork-plugin/libnetwork-go/context"
-	"github.com/libnetwork-plugin/libnetwork-go/handlers"
+	"github.com/docker/go-plugins-helpers/network"
+	"github.com/libnetwork-plugin/libnetwork-go/driver"
 )
 
 const (
@@ -25,32 +25,7 @@ func init() {
 }
 
 func main() {
-	e := echo.New()
-
-	e.Logger().Printf("Running on port %v...", serverPort)
-
-	e.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			cc := &context.ClientContext{Context: c}
-			return h(cc)
-		}
-	})
-
-	e.POST("/Plugin.Activate", handlers.PluginActivateHandler)
-
-	// IPAM driver endpoints.
-	e.POST("/IpamDriver.GetDefaultAddressSpaces", handlers.IPAMDriverGetDefaultAddressSpaces)
-	e.POST("/IpamDriver.RequestPool", handlers.IPAMDriverRequestPool)
-	e.POST("/IpamDriver.ReleasePool", handlers.IPAMDriverReleasePool)
-	e.POST("/IpamDriver.RequestAddress", handlers.IPAMDriverRequestAddress)
-	e.POST("/IpamDriver.ReleaseAddress", handlers.IPAMDriverReleaseAddress)
-
-	err := e.Run(standard.New(":" + serverPort))
-
-	if err != nil {
-		e.Logger().Printf("%v\n", err)
-		return
-	}
-
-	e.Logger().Print("Exiting.")
+	h := network.NewHandler(driver.CalicoDriver{})
+	err := h.ServeTCP("calico-net", fmt.Sprintf(":%v", serverPort))
+	log.Fatal(err)
 }

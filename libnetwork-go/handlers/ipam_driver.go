@@ -3,16 +3,17 @@ package handlers
 import (
 	"net/http"
 
+	"fmt"
+	"net"
+
 	"github.com/labstack/echo"
 	"github.com/libnetwork-plugin/libnetwork-go/context"
 	"github.com/libnetwork-plugin/libnetwork-go/errors"
 	"github.com/libnetwork-plugin/libnetwork-go/handlers/responses"
-	"github.com/tigera/libcalico-go/lib/api"
-	caliconet "github.com/tigera/libcalico-go/lib/net"
 	"github.com/libnetwork-plugin/libnetwork-go/utils"
+	"github.com/tigera/libcalico-go/lib/api"
 	datastoreClient "github.com/tigera/libcalico-go/lib/client"
-	"net"
-	"fmt"
+	caliconet "github.com/tigera/libcalico-go/lib/net"
 )
 
 const (
@@ -30,8 +31,8 @@ const (
 	// used rather than the default libnetwork IPAM driver - this is useful because
 	// Calico Network Driver behavior depends on whether our IPAM driver was used or
 	// not.
-	poolCIDRV4 = "0.0.0.0/0"
-	poolCIDRV6 = "::/0"
+	poolCIDRV4    = "0.0.0.0/0"
+	poolCIDRV6    = "::/0"
 	gatewayCIDRV4 = "0.0.0.0/0"
 	gatewayCIDRV6 = "::/0"
 )
@@ -40,7 +41,7 @@ func PluginActivateHandler(c echo.Context) error {
 	clientContext := c.(*context.ClientContext)
 	utils.LogJSONMessage(clientContext.Logger(), "Activate response JSON=%v", responses.PluginActivate)
 
-	return c.JSON(http.StatusAccepted, responses.PluginActivate)
+	return c.JSON(http.StatusOK, responses.PluginActivate)
 }
 
 func IPAMDriverGetDefaultAddressSpaces(c echo.Context) error {
@@ -51,7 +52,7 @@ func IPAMDriverGetDefaultAddressSpaces(c echo.Context) error {
 		responses.GetDefaultAddressSpaces,
 	)
 
-	return c.JSON(http.StatusAccepted, responses.GetDefaultAddressSpaces)
+	return c.JSON(http.StatusOK, responses.GetDefaultAddressSpaces)
 }
 
 func IPAMDriverRequestPool(c echo.Context) error {
@@ -60,9 +61,9 @@ func IPAMDriverRequestPool(c echo.Context) error {
 	logger := clientContext.Logger()
 
 	request := &struct {
-		Pool string
+		Pool    string
 		SubPool string
-		V6 bool
+		V6      bool
 	}{}
 	clientContext.Bind(request)
 	utils.LogJSONMessage(logger, "RequestPool JSON=%s", request)
@@ -71,17 +72,17 @@ func IPAMDriverRequestPool(c echo.Context) error {
 	if request.SubPool != "" {
 		err := errors.Error(
 			c,
-			"Calico IPAM does not support sub pool configuration " +
-                        "on 'docker create network'. Calico IP Pools " +
-                        "should be configured first and IP assignment is " +
-                        "from those pre-configured pools.",
+			"Calico IPAM does not support sub pool configuration "+
+				"on 'docker create network'. Calico IP Pools "+
+				"should be configured first and IP assignment is "+
+				"from those pre-configured pools.",
 		)
 		logger.Error(err)
 		return err
 	}
 
 	// If a pool (subnet on the CLI) is specified, it must match one of the
-    	// preconfigured Calico pools.
+	// preconfigured Calico pools.
 	if request.Pool != "" {
 		poolsClient := client.Pools()
 		_, ipNet, err := caliconet.ParseCIDR(request.Pool)
@@ -94,8 +95,8 @@ func IPAMDriverRequestPool(c echo.Context) error {
 		if err != nil || len(pools.Items) < 1 {
 			err := errors.Error(
 				c,
-				"The requested subnet must match the CIDR of a " +
-				"configured Calico IP Pool.",
+				"The requested subnet must match the CIDR of a "+
+					"configured Calico IP Pool.",
 			)
 			logger.Error(err)
 			return err
@@ -105,22 +106,22 @@ func IPAMDriverRequestPool(c echo.Context) error {
 	var resp *responses.IPAMDriverRequestPoolResponse
 
 	// If a subnet has been specified we use that as the pool ID. Otherwise, we
-    	// use static pool ID and CIDR to indicate that we are assigning from all of
-    	// the pools.
+	// use static pool ID and CIDR to indicate that we are assigning from all of
+	// the pools.
 	// The meta data includes a dummy gateway address.  This prevents libnetwork
 	// from requesting a gateway address from the pool since for a Calico
 	// network our gateway is set to our host IP.
 	if request.V6 {
 		resp = &responses.IPAMDriverRequestPoolResponse{
 			PoolID: poolIDV6,
-			Pool: poolCIDRV6 ,
-			Data: map[string]string{"com.docker.network.gateway": gatewayCIDRV6},
+			Pool:   poolCIDRV6,
+			Data:   map[string]string{"com.docker.network.gateway": gatewayCIDRV6},
 		}
 	} else {
 		resp = &responses.IPAMDriverRequestPoolResponse{
 			PoolID: poolIDV4,
-			Pool: poolCIDRV4,
-			Data: map[string]string{"com.docker.network.gateway": gatewayCIDRV4},
+			Pool:   poolCIDRV4,
+			Data:   map[string]string{"com.docker.network.gateway": gatewayCIDRV4},
 		}
 	}
 
@@ -157,7 +158,7 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 	logger := clientContext.Logger()
 
 	request := &struct {
-		PoolID string
+		PoolID  string
 		Address string
 	}{}
 	clientContext.Bind(request)
@@ -165,14 +166,14 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 
 	var (
 		version int
-		pool *api.Pool
-		IPs []caliconet.IP
+		pool    *api.Pool
+		IPs     []caliconet.IP
 	)
 
 	if request.Address == "" {
 		var (
-			numV4 int
-			numV6 int
+			numV4  int
+			numV6  int
 			poolV4 *caliconet.IPNet
 			poolV6 *caliconet.IPNet
 		)
@@ -196,7 +197,7 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 			if err != nil {
 				message := "The network references a Calico pool which " +
 					"has been deleted. Please re-instate the " +
-                                	"Calico pool before using the network."
+					"Calico pool before using the network."
 				logger.Error(err)
 				return errors.Error(c, message)
 			}
@@ -218,8 +219,8 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 		// host.
 		IPsV4, IPsV6, err := client.IPAM().AutoAssign(
 			datastoreClient.AutoAssignArgs{
-				Num4: numV4,
-				Num6: numV6,
+				Num4:     numV4,
+				Num6:     numV6,
 				Hostname: hostname,
 				IPv4Pool: poolV4,
 				IPv6Pool: poolV6,
@@ -237,7 +238,7 @@ func IPAMDriverRequestAddress(c echo.Context) error {
 		ip := net.ParseIP(request.Address)
 		err := client.IPAM().AssignIP(
 			datastoreClient.AssignIPArgs{
-				IP: caliconet.IP{ip},
+				IP:       caliconet.IP{ip},
 				Hostname: hostname,
 			},
 		)
