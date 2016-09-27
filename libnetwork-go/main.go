@@ -7,7 +7,6 @@ import (
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
 )
 
-
 func main() {
 	h := network.NewHandler(driver.CalicoDriver{})
 	err := h.ServeUnix("root", "calico")
