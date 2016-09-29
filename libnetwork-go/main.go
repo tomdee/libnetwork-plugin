@@ -7,12 +7,13 @@ import (
 
 	"github.com/docker/go-plugins-helpers/network"
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
+	"github.com/tigera/libcalico-go/lib/api"
 	datastoreClient "github.com/tigera/libcalico-go/lib/client"
 )
 
 var (
-	client datastoreClient.Client
-	config api.ClientConfig
+	client *datastoreClient.Client
+	config *api.ClientConfig
 	logger *log.Logger
 )
 
@@ -22,7 +23,7 @@ func init() {
 	if config, err = datastoreClient.LoadClientConfig(""); err != nil {
 		panic(err)
 	}
-	if client, err = datastoreClient.New(config); err != nil {
+	if client, err = datastoreClient.New(*config); err != nil {
 		panic(err)
 	}
 

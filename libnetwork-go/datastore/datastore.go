@@ -19,22 +19,22 @@ const (
 )
 
 type Datastore interface {
-	GetNetwork(networkID string) (Network, error)
+	GetNetwork(networkID string) (*Network, error)
 	WriteNetwork(networkID string, data Network) error
 	RemoveNetwork(networkID string) error
 }
 
-type Network struct {
-}
+// TODO: specify Network data structure.
+type Network struct{}
 
 type CalicoDatastore struct {
 	etcd client.KeysAPI
 }
 
 // NewCalicoDatastore is the only way CalicoDatastore instances should be created.
-// It basically rebuilds etcd client which will be used in libcalico-go's client,
-// but makes it available to direct use.
-// Code is borrowed from
+// It basically recreates etcd client which will be used in libcalico-go's client
+// based on given config, but makes it available to direct use.
+// Code is borrowed from calico api client constructor.
 func NewCalicoDatastore(config api.ClientConfig) (Datastore, error) {
 	etcdConfig, ok := config.BackendConfig.(*calicoEtcd.EtcdConfig)
 
@@ -42,7 +42,7 @@ func NewCalicoDatastore(config api.ClientConfig) (Datastore, error) {
 		return nil, errors.New("Invalid config format")
 	}
 
-	// Determine the location from the authority or the endpoints.  The endpoints
+	// Determine the location from the authority or the endpoints. The endpoints
 	// takes precedence if both are specified.
 	etcdLocation := []string{}
 	if etcdConfig.EtcdAuthority != "" {
@@ -87,8 +87,16 @@ func NewCalicoDatastore(config api.ClientConfig) (Datastore, error) {
 	return CalicoDatastore{keys}, nil
 }
 
-func (d CalicoDatastore) GetNetwork(networkID string) (Network, error) {
-	return Network{}, nil
+func (d CalicoDatastore) GetNetwork(networkID string) (*Network, error) {
+	resp, err := d.etcd.Get(context.Background(), networkID, nil)
+	if err != nil {
+		return nil, err
+	}
+	var result *Network
+	if err = json.Unmarshal([]byte(resp.Node.Value), result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (d CalicoDatastore) WriteNetwork(networkID string, data Network) error {
@@ -96,10 +104,11 @@ func (d CalicoDatastore) WriteNetwork(networkID string, data Network) error {
 	if err != nil {
 		return err
 	}
-	_, err := d.etcd.Set(context.Background(), networkID, string(marshaledData), nil)
+	_, err = d.etcd.Set(context.Background(), networkID, string(marshaledData), nil)
 	return err
 }
 
 func (d CalicoDatastore) RemoveNetwork(networkID string) error {
-	return nil
+	_, err := d.etcd.Delete(context.Background(), networkID, nil)
+	return err
 }
