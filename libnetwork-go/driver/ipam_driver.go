@@ -15,30 +15,38 @@ import (
 	caliconet "github.com/tigera/libcalico-go/lib/net"
 )
 
-const (
-	// Calico IPAM module does not allow selection of pools from which to allocate
-	// IP addresses.  The pool ID, which has to be supplied in the libnetwork IPAM
-	// API is therefore fixed.  We use different values for IPv4 and IPv6 so that
-	// during allocation we know which IP version to use.
-	poolIDV4 = "CalicoPoolIPv4"
-	poolIDV6 = "CalicoPoolIPv6"
 
-	// Fix pool and gateway CIDRs.  As per comment above, Calico IPAM does not allow
-	// assignment from a specific pool, so we choose a dummy value that will not be
-	// used in practise.  A 0/0 value is used for both IPv4 and IPv6.  This value is
-	// also used by the Network Driver to indicate that the Calico IPAM driver was
-	// used rather than the default libnetwork IPAM driver - this is useful because
-	// Calico Network Driver behavior depends on whether our IPAM driver was used or
-	// not.
-	poolCIDRV4    = "0.0.0.0/0"
-	poolCIDRV6    = "::/0"
-	gatewayCIDRV4 = "0.0.0.0/0"
-	gatewayCIDRV6 = "::/0"
-)
 
 type IpamDriver struct {
 	client *datastoreClient.Client
 	logger *log.Logger
+
+	poolIDV4 string
+	poolIDV6 string
+
+	poolCIDRV4    string
+	poolCIDRV6    string
+	gatewayCIDRV4 string
+	gatewayCIDRV6 string
+}
+
+func NewIpamDriver(client *datastoreClient.Client, logger *log.Logger) ipam.Ipam {
+	return IpamDriver{
+		client: client,
+		logger: logger,
+
+		poolIDV4: PoolIDV4,
+		poolIDV6: PoolIDV6,
+
+		poolCIDRV4:    PoolCIDRV4,
+		poolCIDRV6:    PoolCIDRV6,
+		gatewayCIDRV4: GatewayCIDRV4,
+		gatewayCIDRV6: GatewayCIDRV6,
+	}
+}
+
+func (i IpamDriver) GetCapabilities() (*ipam.CapabilitiesResponse, error) {
+	return nil, nil
 }
 
 func (i IpamDriver) GetDefaultAddressSpaces() (*ipam.AddressSpacesResponse, error) {
@@ -96,15 +104,15 @@ func (i IpamDriver) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Request
 	// network our gateway is set to our host IP.
 	if request.V6 {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: poolIDV6,
-			Pool:   poolCIDRV6,
-			Data:   map[string]string{"com.docker.network.gateway": gatewayCIDRV6},
+			PoolID: i.poolIDV6,
+			Pool:   i.poolCIDRV6,
+			Data:   map[string]string{"com.docker.network.gateway": i.gatewayCIDRV6},
 		}
 	} else {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: poolIDV4,
-			Pool:   poolCIDRV4,
-			Data:   map[string]string{"com.docker.network.gateway": gatewayCIDRV4},
+			PoolID: i.poolIDV4,
+			Pool:   i.poolCIDRV4,
+			Data:   map[string]string{"com.docker.network.gateway": i.gatewayCIDRV4},
 		}
 	}
 
@@ -147,9 +155,9 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		// No address requested, so auto assign from our pools.  If the pool ID
 		// is one of the fixed IDs then assign from across all configured pools,
 		// otherwise assign from the requested pool
-		if request.PoolID == poolIDV4 {
+		if request.PoolID == PoolIDV4 {
 			version = 4
-		} else if request.PoolID == poolIDV6 {
+		} else if request.PoolID == i.poolIDV6 {
 			version = 6
 		} else {
 			poolsClient := i.client.Pools()
