@@ -8,6 +8,7 @@ import (
 
 	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/docker/go-plugins-helpers/network"
 	"github.com/tigera/libcalico-go/lib/api"
 	calicoEtcd "github.com/tigera/libcalico-go/lib/backend/etcd"
 	"golang.org/x/net/context"
@@ -24,18 +25,22 @@ type Datastore interface {
 	RemoveNetwork(networkID string) error
 }
 
-// TODO: specify Network data structure.
-type Network struct{}
+type Network struct {
+	NetworkID string
+	Options   map[string]interface{}
+	IPv4Data  []*network.IPAMData
+	IPv6Data  []*network.IPAMData
+}
 
 type CalicoDatastore struct {
 	etcd client.KeysAPI
 }
 
-// NewCalicoDatastore is the only way CalicoDatastore instances should be created.
+// New is the only way CalicoDatastore instances should be created.
 // It basically recreates etcd client which will be used in libcalico-go's client
 // based on given config, but makes it available to direct use.
 // Code is borrowed from calico api client constructor.
-func NewCalicoDatastore(config api.ClientConfig) (Datastore, error) {
+func New(config api.ClientConfig) (Datastore, error) {
 	etcdConfig, ok := config.BackendConfig.(*calicoEtcd.EtcdConfig)
 
 	if !ok {

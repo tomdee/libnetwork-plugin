@@ -8,12 +8,16 @@ import (
 	"github.com/docker/go-plugins-helpers/network"
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
 	"github.com/tigera/libcalico-go/lib/api"
+
+	libnetworkDatastore "github.com/libnetwork-plugin/libnetwork-go/datastore"
 	datastoreClient "github.com/tigera/libcalico-go/lib/client"
 )
 
 var (
-	client *datastoreClient.Client
-	config *api.ClientConfig
+	config    *api.ClientConfig
+	client    *datastoreClient.Client
+	datastore libnetworkDatastore.Datastore
+
 	logger *log.Logger
 )
 
@@ -26,12 +30,15 @@ func init() {
 	if client, err = datastoreClient.New(*config); err != nil {
 		panic(err)
 	}
+	if datastore, err = libnetworkDatastore.New(*config); err != nil {
+		panic(err)
+	}
 
 	logger = log.New(os.Stdout, "", log.LstdFlags)
 }
 
 func main() {
-	h := network.NewHandler(driver.NewNetworkDriver(client, logger))
+	h := network.NewHandler(driver.NewNetworkDriver(client, datastore, logger))
 	err := h.ServeUnix("root", "calico")
 	log.Fatal(err)
 }

@@ -1,6 +1,8 @@
 package driver
 
 const (
+	IPv4 = "IPv4"
+	IPv6 = "IPv6"
 	// Calico IPAM module does not allow selection of pools from which to allocate
 	// IP addresses.  The pool ID, which has to be supplied in the libnetwork IPAM
 	// API is therefore fixed.  We use different values for IPv4 and IPv6 so that
@@ -19,4 +21,6 @@ const (
 	PoolCIDRV6    = "::/0"
 	GatewayCIDRV4 = "0.0.0.0/0"
 	GatewayCIDRV6 = "::/0"
+
+	IFPrefix = "cali"
 )

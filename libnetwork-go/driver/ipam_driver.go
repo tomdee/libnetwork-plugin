@@ -15,12 +15,7 @@ import (
 	caliconet "github.com/tigera/libcalico-go/lib/net"
 )
 
-
-
-type IpamDriver struct {
-	client *datastoreClient.Client
-	logger *log.Logger
-
+type IpamDriverMetadata struct {
 	poolIDV4 string
 	poolIDV6 string
 
@@ -30,18 +25,26 @@ type IpamDriver struct {
 	gatewayCIDRV6 string
 }
 
+type IpamDriver struct {
+	client   *datastoreClient.Client
+	logger   *log.Logger
+	metadata IpamDriverMetadata
+}
+
 func NewIpamDriver(client *datastoreClient.Client, logger *log.Logger) ipam.Ipam {
 	return IpamDriver{
 		client: client,
 		logger: logger,
 
-		poolIDV4: PoolIDV4,
-		poolIDV6: PoolIDV6,
+		metadata: IpamDriverMetadata{
+			poolIDV4: PoolIDV4,
+			poolIDV6: PoolIDV6,
 
-		poolCIDRV4:    PoolCIDRV4,
-		poolCIDRV6:    PoolCIDRV6,
-		gatewayCIDRV4: GatewayCIDRV4,
-		gatewayCIDRV6: GatewayCIDRV6,
+			poolCIDRV4:    PoolCIDRV4,
+			poolCIDRV6:    PoolCIDRV6,
+			gatewayCIDRV4: GatewayCIDRV4,
+			gatewayCIDRV6: GatewayCIDRV6,
+		},
 	}
 }
 
@@ -104,15 +107,15 @@ func (i IpamDriver) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Request
 	// network our gateway is set to our host IP.
 	if request.V6 {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: i.poolIDV6,
-			Pool:   i.poolCIDRV6,
-			Data:   map[string]string{"com.docker.network.gateway": i.gatewayCIDRV6},
+			PoolID: i.metadata.poolIDV6,
+			Pool:   i.metadata.poolCIDRV6,
+			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV6},
 		}
 	} else {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: i.poolIDV4,
-			Pool:   i.poolCIDRV4,
-			Data:   map[string]string{"com.docker.network.gateway": i.gatewayCIDRV4},
+			PoolID: i.metadata.poolIDV4,
+			Pool:   i.metadata.poolCIDRV4,
+			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV4},
 		}
 	}
 
@@ -157,7 +160,7 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		// otherwise assign from the requested pool
 		if request.PoolID == PoolIDV4 {
 			version = 4
-		} else if request.PoolID == i.poolIDV6 {
+		} else if request.PoolID == i.metadata.poolIDV6 {
 			version = 6
 		} else {
 			poolsClient := i.client.Pools()
