@@ -1,12 +1,18 @@
 package netns
 
 import (
+	"errors"
 	"os/exec"
+	"regexp"
 	"time"
 )
 
 const (
 	IPCmdTimeout = 5
+)
+
+var (
+	IPv6RE = regexp.MustCompile(`inet6 ([a-fA-F\d:]+)/\d{1,3}`)
 )
 
 func ExecuteWithTimeout(cmd *exec.Cmd, seconds int) error {
@@ -65,4 +71,25 @@ func IsVethExists(vethHostName string) bool {
 		return false
 	}
 	return true
+}
+
+func BringUpInterface(interfaceName string) error {
+	cmd := exec.Command("ip", "link", "set", interfaceName, "up")
+	return ExecuteWithTimeout(cmd, IPCmdTimeout)
+}
+
+func GetIPv6LinkLocal(interfaceName string) ([]byte, error) {
+	var (
+		out []byte
+		err error
+		cmd = exec.Command("ip", "-6", "addr", "show", "dev", interfaceName)
+	)
+	if out, err = cmd.Output(); err != nil {
+		return nil, err
+	}
+	matches := IPv6RE.FindAll(out, -1)
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+	return nil, errors.New("IP not found")
 }

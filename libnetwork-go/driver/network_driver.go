@@ -2,6 +2,7 @@ package driver
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net"
 
@@ -308,6 +309,7 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		return nil, err
 	}
 
+	// Extract relevant data from the Network data.
 	if gatewayV4, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv4Data, IPv4); err != nil {
 		d.logger.Println(err)
 		return nil, err
@@ -325,6 +327,9 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 	resp := &network.JoinResponse{}
 
 	if useV4 || useV6 {
+		// One of the network gateway addresses indicate that we are using
+		// Calico IPAM driver.  In this case we setup routes using the gateways
+		// configured on the endpoint (which will be our host IPs).
 		d.logger.Println("Using Calico IPAM driver, configure gateway and " +
 			"static routes to the host")
 		if gatewayV4 != nil {
@@ -335,10 +340,40 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 				NextHop:     "",
 			})
 		}
-		// TODO: to be implemented
+		if gatewayV6 != nil {
+			// Here, we'll report the link local address of the host's cali interface to libnetwork
+			// as our IPv6 gateway. IPv6 link local addresses are automatically assigned to interfaces
+			// when they are brought up. Unfortunately, the container link must be up as well. So
+			// bring it up now
+			if err = netns.BringUpInterface(tempInterfaceName); err != nil {
+				return nil, err
+			}
+			// Then extract the link local address that was just assigned to our host's interface
+			nextHop6, err := netns.GetIPv6LinkLocal(hostInterfaceName)
+			if err != nil {
+				return nil, err
+			}
+			resp.GatewayIPv6 = string(nextHop6)
+			var destination *caliconet.IPNet
+			if _, destination, err = caliconet.ParseCIDR(string(nextHop6)); err != nil {
+				return nil, err
+			}
+			resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
+				Destination: fmt.Sprintf("%v", destination),
+				RouteType:   1,
+				NextHop:     "",
+			})
+		}
+	} else {
+		// We are not using Calico IPAM driver, so configure blank gateways to
+		// set up auto-gateway behavior.
+		// Default empty values for Gateway and GatewayIPv6 are used.
+		d.logger.Println("Not using Calico IPAM driver")
 	}
 
-	return nil, nil
+	logutils.JSONMessage(d.logger, "Join Response JSON=%v", resp)
+
+	return resp, nil
 }
 
 func (d NetworkDriver) Leave(*network.LeaveRequest) error {
