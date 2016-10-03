@@ -376,16 +376,26 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 	return resp, nil
 }
 
-func (d NetworkDriver) Leave(*network.LeaveRequest) error {
+func (d NetworkDriver) Leave(request *network.LeaveRequest) error {
+	logutils.JSONMessage(d.logger, "Leave response JSON=%v", request)
+	caliName, err := networkutils.GenerateCaliInterfaceName(d.metadata.ifPrefix, request.EndpointID)
+	if err != nil {
+		d.logger.Println(err)
+		return err
+	}
+	_, err = netns.RemoveVeth(caliName)
+	return err
+}
 
+func (d NetworkDriver) DiscoverNew(request *network.DiscoveryNotification) error {
+	logutils.JSONMessage(d.logger, "DiscoverNew JSON=%v", request)
+	d.logger.Println("DiscoverNew response JSON={}")
 	return nil
 }
 
-func (d NetworkDriver) DiscoverNew(*network.DiscoveryNotification) error {
-	return nil
-}
-
-func (d NetworkDriver) DiscoverDelete(*network.DiscoveryNotification) error {
+func (d NetworkDriver) DiscoverDelete(request *network.DiscoveryNotification) error {
+	logutils.JSONMessage(d.logger, "DiscoverNew JSON=%v", request)
+	d.logger.Println("DiscoverDelete response JSON={}")
 	return nil
 }
 
