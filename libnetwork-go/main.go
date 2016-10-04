@@ -5,12 +5,18 @@ import (
 
 	"os"
 
+	"github.com/docker/go-plugins-helpers/ipam"
 	"github.com/docker/go-plugins-helpers/network"
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
 	"github.com/tigera/libcalico-go/lib/api"
 
 	libnetworkDatastore "github.com/libnetwork-plugin/libnetwork-go/datastore"
 	datastoreClient "github.com/tigera/libcalico-go/lib/client"
+)
+
+const (
+	ipamPluginName    = "calico-ipam"
+	networkPluginName = "calico-net"
 )
 
 var (
@@ -38,7 +44,25 @@ func init() {
 }
 
 func main() {
-	h := network.NewHandler(driver.NewNetworkDriver(client, datastore, logger))
-	err := h.ServeUnix("root", "calico")
+	errChannel := make(chan error)
+	networkHandler := network.NewHandler(driver.NewNetworkDriver(client, datastore, logger))
+	ipamHandler := ipam.NewHandler(driver.NewIpamDriver(client, logger))
+
+	go func(c chan error) {
+		logger.Println("calico-net has started.")
+		err := networkHandler.ServeUnix("root", networkPluginName)
+		logger.Println("calico-net has stopped working.")
+		c <- err
+	}(errChannel)
+
+	go func(c chan error) {
+		logger.Println("calico-ipam has started.")
+		err := ipamHandler.ServeUnix("root", ipamPluginName)
+		logger.Println("calico-ipam has stopped working.")
+		c <- err
+	}(errChannel)
+
+	err := <-errChannel
+
 	log.Fatal(err)
 }

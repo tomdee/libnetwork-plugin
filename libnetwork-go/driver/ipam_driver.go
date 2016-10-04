@@ -49,7 +49,9 @@ func NewIpamDriver(client *datastoreClient.Client, logger *log.Logger) ipam.Ipam
 }
 
 func (i IpamDriver) GetCapabilities() (*ipam.CapabilitiesResponse, error) {
-	return nil, nil
+	resp := ipam.CapabilitiesResponse{}
+	logutils.JSONMessage(i.logger, "GetCapabilities response JSON=%v", resp)
+	return &resp, nil
 }
 
 func (i IpamDriver) GetDefaultAddressSpaces() (*ipam.AddressSpacesResponse, error) {
