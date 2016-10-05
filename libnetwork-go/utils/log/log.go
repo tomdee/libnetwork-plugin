@@ -11,5 +11,5 @@ func JSONMessage(logger *log.Logger, formattedMessage string, data interface{}) 
 		logger.Fatal(err)
 		return
 	}
-	logger.Printf(formattedMessage, requestJSON)
+	logger.Printf(formattedMessage, string(requestJSON))
 }
