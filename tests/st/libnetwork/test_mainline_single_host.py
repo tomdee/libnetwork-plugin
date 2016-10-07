@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 POST_DOCKER_COMMANDS = ["docker load -i /code/calico-node.tgz",
                         "docker load -i /code/busybox.tgz",
-                        "docker load -i /code/calico-node-libnetwork.tgz"]
+                        "docker load -i /code/libnetwork-plugin-go.tgz"]
 
 if ETCD_SCHEME == "https":
     ADDITIONAL_DOCKER_OPTIONS = "--cluster-store=etcd://%s:2379 " \

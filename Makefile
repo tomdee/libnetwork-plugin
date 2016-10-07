@@ -29,7 +29,7 @@ dist/calicoctl:
 test: st ut
 ssl-certs: certs/.certificates.created ## Generate self-signed SSL certificates
 
-ut: 
+ut:
 	docker run --rm -v `pwd`:/code calico/test nosetests tests/unit  -c nose.cfg
 
 ut-circle:
@@ -51,6 +51,11 @@ busybox.tgz:
 calico-node.tgz:
 	docker pull calico/node:latest
 	docker save calico/node:latest | gzip -c > calico-node.tgz
+
+libnetwork-plugin-go:
+	-docker rmi testing/libnetwork-plugin-go:testing
+	docker build -t testing/libnetwork-plugin-go:testing libnetwork-go
+	docker save testing/libnetwork-plugin-go:testing | gzip -c > libnetwork-plugin-go.tgz
 
 calico-node-libnetwork.tgz: caliconode.created
 	docker save calico/node-libnetwork:latest | gzip -c > calico-node-libnetwork.tgz
@@ -95,6 +100,26 @@ st:  dist/calicoctl busybox.tgz calico-node.tgz calico-node-libnetwork.tgz run-e
 	           -v `pwd`:/code \
 	           calico/test \
 	           sh -c 'cp -ra tests/st/libnetwork/ /tests/st && cd / && nosetests $(ST_TO_RUN) -sv --nologcapture --with-timer $(ST_OPTIONS)'
+
+st-go:  dist/calicoctl busybox.tgz calico-node.tgz libnetwork-plugin-go run-etcd
+	# Use the host, PID and network namespaces from the host.
+	# Privileged is needed since 'calico node' write to /proc (to enable ip_forwarding)
+	# Map the docker socket in so docker can be used from inside the container
+	# HOST_CHECKOUT_DIR is used for volume mounts on containers started by this one.
+	# All of code under test is mounted into the container.
+	#   - This also provides access to calicoctl and the docker client
+	docker run --uts=host \
+	           --pid=host \
+	           --net=host \
+	           --privileged \
+	           -e HOST_CHECKOUT_DIR=$(HOST_CHECKOUT_DIR) \
+	           -e DEBUG_FAILURES=$(DEBUG_FAILURES) \
+	           --rm -ti \
+	           -v /var/run/docker.sock:/var/run/docker.sock \
+	           -v `pwd`:/code \
+	           calico/test \
+	           sh -c 'cp -ra tests/st/libnetwork/ /tests/st && cd / && nosetests $(ST_TO_RUN) -sv --nologcapture --with-timer $(ST_OPTIONS)'
+
 
 ## Run the STs in a container using etcd with SSL certificate/key/CA verification.
 st-ssl: dist/calicoctl busybox.tgz calico-node.tgz calico-node-libnetwork.tgz run-etcd-ssl

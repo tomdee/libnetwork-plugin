@@ -13,6 +13,8 @@
 # limitations under the License.
 import logging
 
+from subprocess import check_output
+
 from tests.st.test_base import TestBase
 from tests.st.utils.docker_host import DockerHost
 from tests.st.utils.utils import assert_number_endpoints
@@ -37,14 +39,20 @@ class TestAssignIP(TestBase):
                        post_docker_commands=POST_DOCKER_COMMANDS,
                        start_calico=False) as host2:
 
-            host1.start_calico_node("--libnetwork")
-            host2.start_calico_node("--libnetwork")
+            run_plugin_command = 'docker run -d ' \
+                                 '--privileged ' \
+                                 '-v /run/docker/plugins:/run/docker/plugins ' \
+                                 'testing/libnetwork-plugin-go:testing'
+
+            host1.execute(run_plugin_command)
+            host2.execute(run_plugin_command)
 
             # Set up one endpoints on each host
             workload1_ip = "192.168.1.101"
             workload2_ip = "192.168.1.102"
             subnet = "192.168.0.0/16"
-            network = host1.create_network("testnet", subnet=subnet)
+            network = host1.create_network(
+                "testnet", subnet=subnet, driver="calico-net", ipam_driver='calico-ipam')
             workload1 = host1.create_workload("workload1",
                                               network=network,
                                               ip=workload1_ip)
