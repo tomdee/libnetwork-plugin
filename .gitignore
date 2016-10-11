@@ -16,6 +16,7 @@ caliconode.created
 calico_containers/pycalico.egg-info/
 busybox.tgz
 calico-node-libnetwork.tgz
+calico-node-libnetwork-go.tgz
 calico-node.tgz
 calicoctl
 
