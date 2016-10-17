@@ -27,10 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 class TestAssignIP(TestBase):
-    def setUp(self):
-        self.post_docker_commands = POST_DOCKER_COMMANDS
-        self.post_docker_commands.append("docker load -i /code/calico-node-libnetwork-go.tgz")
-
     def test_assign_specific_ip(self):
         """
         Test that a libnetwork assigned IP is allocated to the container with
@@ -38,11 +34,11 @@ class TestAssignIP(TestBase):
         """
         with DockerHost('host1',
                         additional_docker_options=ADDITIONAL_DOCKER_OPTIONS,
-                        post_docker_commands=self.post_docker_commands,
+                        post_docker_commands=POST_DOCKER_COMMANDS,
                         start_calico=False) as host1, \
             DockerHost('host2',
                        additional_docker_options=ADDITIONAL_DOCKER_OPTIONS,
-                       post_docker_commands=self.post_docker_commands,
+                       post_docker_commands=POST_DOCKER_COMMANDS,
                        start_calico=False) as host2:
 
             run_plugin_command = 'docker run -d ' \
@@ -51,7 +47,8 @@ class TestAssignIP(TestBase):
                                  '-v /run/docker/plugins:/run/docker/plugins ' \
                                  '-v /var/run/docker.sock:/var/run/docker.sock ' \
                                  '-v /lib/modules:/lib/modules ' \
-                                 'calico/calico-node-libnetwork-go' % (get_ip(),)
+                                 '--name calico-node-libnetwork-go ' \
+                                 'calico/node-libnetwork-go' % (get_ip(),)
 
             host1.start_calico_node()
             host1.execute(run_plugin_command)
@@ -64,7 +61,8 @@ class TestAssignIP(TestBase):
             workload2_ip = "192.168.1.102"
             subnet = "192.168.0.0/16"
             network = host1.create_network(
-                "testnet", subnet=subnet, driver="calico-net", ipam_driver='calico-ipam')
+                "testnet", subnet=subnet, driver="calico-net")
+
             workload1 = host1.create_workload("workload1",
                                               network=network,
                                               ip=workload1_ip)
@@ -79,7 +77,6 @@ class TestAssignIP(TestBase):
             # Check connectivity with assigned IPs
             workload1.assert_can_ping(workload2_ip, retries=5)
             workload2.assert_can_ping(workload1_ip, retries=5)
-
             # Disconnect endpoints from the network
             # Assert can't ping and endpoints are removed from Calico
             network.disconnect(host1, workload1)

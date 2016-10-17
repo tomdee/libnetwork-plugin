@@ -105,36 +105,12 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 		// create as additional options.  Note that this IP Pool has ipam=False
 		// to ensure it is not used in Calico IPAM assignment.
 		if !networkutils.IsUsingCalicoIpam(gateway, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6) {
-			optionsError := errors.New("Invalid options")
-			var (
-				options          map[string]bool
-				optionsInterface interface{}
-				ok               bool
-
-				ipip, masquerade bool
-			)
-
-			if optionsInterface, ok = request.Options["com.docker.network.generic"]; !ok {
-				return optionsError
-			}
-
-			if options, ok = optionsInterface.(map[string]bool); !ok {
-				return optionsError
-			}
-
-			if ipip, ok = options["ipip"]; !ok {
-				return errors.New("ipip option is not provided")
-			}
-
-			if masquerade, ok = options["nat-outgoing"]; !ok {
-				return errors.New("nat-outgoing option is not provided")
-			}
-
 			_, err := d.client.Pools().Create(&api.Pool{
 				Metadata: api.PoolMetadata{CIDR: *pool},
 				Spec: api.PoolSpec{
-					IPIP:        &api.IPIPConfiguration{Enabled: ipip},
-					NATOutgoing: masquerade,
+					IPIP:        &api.IPIPConfiguration{Enabled: false},
+					NATOutgoing: false,
+					Disabled:    true,
 				},
 			})
 			if err != nil {

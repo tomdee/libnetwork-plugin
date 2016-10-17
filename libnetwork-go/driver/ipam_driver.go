@@ -109,13 +109,13 @@ func (i IpamDriver) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Request
 	// network our gateway is set to our host IP.
 	if request.V6 {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: i.metadata.poolIDV6,
+			PoolID: (map[bool]string{true: request.Pool , false: i.metadata.poolIDV6})[request.Pool != ""],
 			Pool:   i.metadata.poolCIDRV6,
 			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV6},
 		}
 	} else {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: i.metadata.poolIDV4,
+			PoolID: (map[bool]string{true: request.Pool , false: i.metadata.poolIDV4})[request.Pool != ""],
 			Pool:   i.metadata.poolCIDRV4,
 			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV4},
 		}

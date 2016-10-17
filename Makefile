@@ -2,6 +2,7 @@
 
 SRCDIR=libnetwork
 SRC_FILES=$(wildcard $(SRCDIR)/*.py)
+GO_SRC_FILES=$(shell find libnetwork-go/ -type f -name '*.go')
 BUILD_DIR=build_calicoctl
 BUILD_FILES=$(BUILD_DIR)/Dockerfile $(BUILD_DIR)/requirements.txt
 NODE_FILES=Dockerfile start.sh
@@ -55,10 +56,10 @@ calico-node.tgz:
 calico-node-libnetwork.tgz: caliconode.created
 	docker save calico/node-libnetwork:latest | gzip -c > calico-node-libnetwork.tgz
 
-calico-node-libnetwork-go.tgz: caliconode.created
-	-docker rmi calico/libnetwork-plugin-go
-	docker build -t calico/calico-node-libnetwork-go libnetwork-go
-	docker save calico/calico-node-libnetwork-go:latest | gzip -c > calico-node-libnetwork-go.tgz
+calico-node-libnetwork-go.tgz: $(GO_SRC_FILES)
+	-docker rmi calico/node-libnetwork-go
+	docker build -t calico/node-libnetwork-go libnetwork-go
+	docker save calico/node-libnetwork-go:latest | gzip -c > calico-node-libnetwork-go.tgz
 
 ## Generate the keys and certificates for running etcd with SSL.
 certs/.certificates.created:
