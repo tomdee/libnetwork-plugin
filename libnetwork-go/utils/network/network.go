@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/docker/go-plugins-helpers/network"
-	caliconet "github.com/tigera/libcalico-go/lib/net"
+	caliconet "github.com/projectcalico/libcalico-go/lib/net"
 )
 
 func GetGatewayPool(logger *log.Logger, data []*network.IPAMData, ipVersion string) (*caliconet.IPNet, *caliconet.IPNet, error) {

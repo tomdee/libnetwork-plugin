@@ -9,8 +9,8 @@ import (
 	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/docker/go-plugins-helpers/network"
-	"github.com/tigera/libcalico-go/lib/api"
-	calicoEtcd "github.com/tigera/libcalico-go/lib/backend/etcd"
+	"github.com/projectcalico/libcalico-go/lib/api"
+	calicoEtcd "github.com/projectcalico/libcalico-go/lib/backend/etcd"
 	"golang.org/x/net/context"
 )
 

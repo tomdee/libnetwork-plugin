@@ -8,9 +8,9 @@ import (
 
 	"github.com/docker/go-plugins-helpers/network"
 
-	"github.com/tigera/libcalico-go/lib/api"
-	datastoreClient "github.com/tigera/libcalico-go/lib/client"
-	caliconet "github.com/tigera/libcalico-go/lib/net"
+	"github.com/projectcalico/libcalico-go/lib/api"
+	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
+	caliconet "github.com/projectcalico/libcalico-go/lib/net"
 
 	"github.com/libnetwork-plugin/libnetwork-go/datastore"
 	logutils "github.com/libnetwork-plugin/libnetwork-go/utils/log"
@@ -118,6 +118,8 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 			}
 		}
 	}
+
+	d.logger.Printf("***************: %+v\n", request)
 
 	err = d.datastore.WriteNetwork(request.NetworkID, datastore.Network{
 		NetworkID: request.NetworkID,

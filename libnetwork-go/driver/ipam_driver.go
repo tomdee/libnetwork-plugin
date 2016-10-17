@@ -10,9 +10,9 @@ import (
 	"github.com/docker/go-plugins-helpers/ipam"
 	logutils "github.com/libnetwork-plugin/libnetwork-go/utils/log"
 	osutils "github.com/libnetwork-plugin/libnetwork-go/utils/os"
-	"github.com/tigera/libcalico-go/lib/api"
-	datastoreClient "github.com/tigera/libcalico-go/lib/client"
-	caliconet "github.com/tigera/libcalico-go/lib/net"
+	"github.com/projectcalico/libcalico-go/lib/api"
+	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
+	caliconet "github.com/projectcalico/libcalico-go/lib/net"
 )
 
 type IpamDriverMetadata struct {
@@ -109,13 +109,13 @@ func (i IpamDriver) RequestPool(request *ipam.RequestPoolRequest) (*ipam.Request
 	// network our gateway is set to our host IP.
 	if request.V6 {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: (map[bool]string{true: request.Pool , false: i.metadata.poolIDV6})[request.Pool != ""],
+			PoolID: (map[bool]string{true: request.Pool, false: i.metadata.poolIDV6})[request.Pool != ""],
 			Pool:   i.metadata.poolCIDRV6,
 			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV6},
 		}
 	} else {
 		resp = &ipam.RequestPoolResponse{
-			PoolID: (map[bool]string{true: request.Pool , false: i.metadata.poolIDV4})[request.Pool != ""],
+			PoolID: (map[bool]string{true: request.Pool, false: i.metadata.poolIDV4})[request.Pool != ""],
 			Pool:   i.metadata.poolCIDRV4,
 			Data:   map[string]string{"com.docker.network.gateway": i.metadata.gatewayCIDRV4},
 		}

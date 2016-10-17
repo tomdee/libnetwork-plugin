@@ -8,10 +8,10 @@ import (
 	"github.com/docker/go-plugins-helpers/ipam"
 	"github.com/docker/go-plugins-helpers/network"
 	"github.com/libnetwork-plugin/libnetwork-go/driver"
-	"github.com/tigera/libcalico-go/lib/api"
+	"github.com/projectcalico/libcalico-go/lib/api"
 
 	libnetworkDatastore "github.com/libnetwork-plugin/libnetwork-go/datastore"
-	datastoreClient "github.com/tigera/libcalico-go/lib/client"
+	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
 )
 
 const (
