@@ -57,14 +57,12 @@ class TestAssignIP(TestBase):
             host2.execute(run_plugin_command)
 
             # Set up one endpoints on each host
-            workload1_ip = "192.168.1.101"
-            workload2_ip = "192.168.1.102"
-            subnet = "192.168.0.0/16"
-            try:
-                network = host1.create_network(
+            workload1_ip = "192.167.1.101"
+            workload2_ip = "192.167.1.102"
+            subnet = "192.167.0.0/16"
+
+            network = host1.create_network(
                     "testnet", subnet=subnet, driver="calico-net")
-            except Exception, e:
-                print host1.execute("docker logs calico-node-libnetwork-go")
 
             workload1 = host1.create_workload("workload1",
                                               network=network,

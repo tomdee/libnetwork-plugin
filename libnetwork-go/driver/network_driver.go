@@ -42,8 +42,9 @@ type NetworkDriver struct {
 
 func NewNetworkDriver(client *datastoreClient.Client, datastore datastore.Datastore, logger *log.Logger) network.Driver {
 	return NetworkDriver{
-		client: client,
-		logger: logger,
+		client:    client,
+		logger:    logger,
+		datastore: datastore,
 
 		metadata: NetworkDriverMetadata{
 
@@ -105,21 +106,34 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 		// create as additional options.  Note that this IP Pool has ipam=False
 		// to ensure it is not used in Calico IPAM assignment.
 		if !networkutils.IsUsingCalicoIpam(gateway, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6) {
+			var spec = api.PoolSpec{Disabled: true}
+
+			if optionsInterface, ok := request.Options["com.docker.network.generic"]; ok {
+				if options, ok := optionsInterface.(map[string]interface{}); !ok {
+					if ipipInterface, ok := options["ipip"]; ok {
+						ipip, ok := ipipInterface.(bool)
+						if ok {
+							spec.IPIP = &api.IPIPConfiguration{Enabled: ipip}
+						}
+					}
+					if masqueradeInterface, ok := options["nat-outgoing"]; !ok {
+						masquerade, ok := masqueradeInterface.(bool)
+						if ok {
+							spec.NATOutgoing = masquerade
+						}
+					}
+				}
+			}
+
 			_, err := d.client.Pools().Create(&api.Pool{
 				Metadata: api.PoolMetadata{CIDR: *pool},
-				Spec: api.PoolSpec{
-					IPIP:        &api.IPIPConfiguration{Enabled: false},
-					NATOutgoing: false,
-					Disabled:    true,
-				},
+				Spec:     spec,
 			})
 			if err != nil {
 				return err
 			}
 		}
 	}
-
-	d.logger.Printf("***************: %+v\n", request)
 
 	err = d.datastore.WriteNetwork(request.NetworkID, datastore.Network{
 		NetworkID: request.NetworkID,

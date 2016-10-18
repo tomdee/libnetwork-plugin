@@ -16,7 +16,7 @@ import (
 
 const (
 	clientTimeout = 30 * time.Second
-	etcdPrefix    = "/calico/libnetwork/v1/"
+	etcdPrefix    = "/v2/keys/calico/libnetwork/v1/"
 )
 
 type Datastore interface {
