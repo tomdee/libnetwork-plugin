@@ -97,11 +97,11 @@ func (d CalicoDatastore) GetNetwork(networkID string) (*Network, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result *Network
-	if err = json.Unmarshal([]byte(resp.Node.Value), result); err != nil {
+	var result = Network{}
+	if err = json.Unmarshal([]byte(resp.Node.Value), &result); err != nil {
 		return nil, err
 	}
-	return result, nil
+	return &result, nil
 }
 
 func (d CalicoDatastore) WriteNetwork(networkID string, data Network) error {

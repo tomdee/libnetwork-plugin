@@ -106,7 +106,7 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 		// create as additional options.  Note that this IP Pool has ipam=False
 		// to ensure it is not used in Calico IPAM assignment.
 		if !networkutils.IsUsingCalicoIpam(gateway, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6) {
-			var spec = api.PoolSpec{Disabled: true}
+			var spec = api.PoolSpec{Disabled: false}
 
 			if optionsInterface, ok := request.Options["com.docker.network.generic"]; ok {
 				if options, ok := optionsInterface.(map[string]interface{}); !ok {
@@ -129,6 +129,7 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 				Metadata: api.PoolMetadata{CIDR: *pool},
 				Spec:     spec,
 			})
+
 			if err != nil {
 				return err
 			}
@@ -227,15 +228,15 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 		return nil, err
 	}
 
-	logutils.JSONMessage(d.logger, "CreateEndpoint JSON=%v", request)
-
-	return &network.CreateEndpointResponse{
+	response := &network.CreateEndpointResponse{
 		Interface: &network.EndpointInterface{
-			Address:     request.Interface.Address,
-			AddressIPv6: request.Interface.AddressIPv6,
-			MacAddress:  string(d.metadata.fixedMac),
+			MacAddress: string(d.metadata.fixedMac),
 		},
-	}, nil
+	}
+
+	logutils.JSONMessage(d.logger, "CreateEndpoint response JSON=%v", response)
+
+	return response, nil
 }
 
 func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) error {
