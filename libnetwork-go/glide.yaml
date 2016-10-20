@@ -99,7 +99,7 @@ import:
   subpackages:
   - libcontainer/user
 - package: github.com/projectcalico/libcalico-go
-  version: ~1.0.0-alpha.1
+  version: d6ce86635949b276b53b325faf791e98b9b1643a
   subpackages:
   - calicoctl/commands
   - calicoctl/commands/node

@@ -1,5 +1,5 @@
-hash: c3203fff8d485ef2d57db6cfe3787bb9eb29aadbd2200b7a390add8ee0ff3e75
-updated: 2016-10-20T11:28:52.74302947+03:00
+hash: f8cb9aebba981b6f83efa6250ce729acada1e2643494ae9fc036c55f9fab5423
+updated: 2016-10-20T12:20:21.58204312+03:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -72,14 +72,6 @@ imports:
   version: 784ddc588536785e7299f7272f39101f7faccc3f
 - name: github.com/ghodss/yaml
   version: bea76d6a4713e18b7f5321a2b020738552def3ea
-- name: github.com/go-playground/locales
-  version: e09c334054e376ba0c75ebb8dcdf36a4733f1772
-  subpackages:
-  - currency
-- name: github.com/go-playground/universal-translator
-  version: fc73d0c4bd37070e0d34e3647253565ff7847264
-- name: github.com/golang/glog
-  version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/kelseyhightower/envconfig
   version: 9aca109c9aec4633fced9717c4a09ecab3d33111
 - name: github.com/labstack/echo
@@ -112,7 +104,7 @@ imports:
   subpackages:
   - libcontainer/user
 - name: github.com/projectcalico/libcalico-go
-  version: 71b90c4cffe60922d75c61f502b3d122fad54043
+  version: d6ce86635949b276b53b325faf791e98b9b1643a
   subpackages:
   - calicoctl/commands
   - calicoctl/commands/node
@@ -141,22 +133,6 @@ imports:
   version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/termie/go-shutil
   version: bcacb06fecaeec8dc42af03c87c6949f4a05c74c
-- name: github.com/tigera/libcalico-go
-  version: d6ce86635949b276b53b325faf791e98b9b1643a
-  subpackages:
-  - lib/api
-  - lib/api/unversioned
-  - lib/backend
-  - lib/backend/api
-  - lib/backend/etcd
-  - lib/backend/model
-  - lib/errors
-  - lib/hwm
-  - lib/net
-  - lib/numorstring
-  - lib/scope
-  - lib/selector/parser
-  - lib/validator
 - name: github.com/ugorji/go
   version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
   subpackages:

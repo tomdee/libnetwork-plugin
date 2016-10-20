@@ -317,7 +317,12 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 	useV6 := gatewayV6 != nil &&
 		networkutils.IsUsingCalicoIpam(gatewayV6, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6)
 
-	resp := &network.JoinResponse{}
+	resp := &network.JoinResponse{
+		InterfaceName: network.InterfaceName{
+			SrcName:   tempInterfaceName,
+			DstPrefix: IFPrefix,
+		},
+	}
 
 	if useV4 || useV6 {
 		// One of the network gateway addresses indicate that we are using
