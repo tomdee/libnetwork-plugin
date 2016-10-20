@@ -1,0 +1,148 @@
+package: github.com/libnetwork-plugin/libnetwork-go
+import:
+- package: github.com/Microsoft/go-winio
+  version: ^0.3.5
+- package: github.com/Sirupsen/logrus
+  version: ~0.10.0
+- package: github.com/cloudfoundry-incubator/candiedyaml
+- package: github.com/coreos/etcd
+  version: ~3.1.0-rc.0
+  subpackages:
+  - client
+  - pkg/fileutil
+  - pkg/pathutil
+  - pkg/tlsutil
+  - pkg/transport
+  - pkg/types
+- package: github.com/coreos/go-systemd
+  version: ~12.0.0
+  subpackages:
+  - activation
+  - journal
+  - util
+- package: github.com/coreos/pkg
+  version: ~3.0.0
+  subpackages:
+  - capnslog
+  - dlopen
+- package: github.com/docker/distribution
+  version: ~2.5.1
+  subpackages:
+  - reference
+- package: github.com/docker/docker
+  version: ~1.12.2
+  subpackages:
+  - daemon/graphdriver
+  - pkg/archive
+  - pkg/authorization
+  - volume
+- package: github.com/docker/engine-api
+  version: ~0.4.0
+  subpackages:
+  - client/transport
+  - client/transport/cancellable
+  - types
+  - types/blkiodev
+  - types/container
+  - types/filters
+  - types/mount
+  - types/network
+  - types/reference
+  - types/registry
+  - types/strslice
+  - types/swarm
+  - types/time
+  - types/versions
+  - types/versions/v1p20
+- package: github.com/docker/go-connections
+  version: ~0.2.1
+  subpackages:
+  - nat
+  - sockets
+  - tlsconfig
+- package: github.com/docker/go-plugins-helpers
+  subpackages:
+  - graphdriver
+  - ipam
+  - network
+  - sdk
+  - volume
+- package: github.com/docker/go-units
+  version: ~0.3.1
+- package: github.com/docopt/docopt-go
+  version: ~0.6.2
+- package: github.com/ghodss/yaml
+- package: github.com/kelseyhightower/envconfig
+  version: ~1.2.0
+- package: github.com/labstack/echo
+  version: ~2.1.0
+  subpackages:
+  - context
+  - engine
+  - log
+- package: github.com/labstack/gommon
+  version: ~0.0.3
+  subpackages:
+  - color
+  - log
+- package: github.com/mattn/go-colorable
+  version: ~0.0.6
+- package: github.com/mattn/go-isatty
+  version: ~0.0.1
+- package: github.com/mcuadros/go-version
+- package: github.com/mitchellh/go-ps
+- package: github.com/olekukonko/tablewriter
+- package: github.com/onsi/ginkgo
+  version: ~1.2.0
+- package: github.com/opencontainers/runc
+  version: ~1.0.0-rc2
+  subpackages:
+  - libcontainer/user
+- package: github.com/projectcalico/libcalico-go
+  version: ~1.0.0-alpha.1
+  subpackages:
+  - calicoctl/commands
+  - calicoctl/commands/node
+  - calicoctl/resourcemgr
+  - lib/api
+  - lib/api/unversioned
+  - lib/backend
+  - lib/backend/api
+  - lib/backend/compat
+  - lib/backend/etcd
+  - lib/backend/model
+  - lib/client
+  - lib/errors
+  - lib/hash
+  - lib/hwm
+  - lib/net
+  - lib/numorstring
+  - lib/scope
+  - lib/selector
+  - lib/selector/parser
+  - lib/selector/tokenizer
+  - lib/validator
+- package: github.com/satori/go.uuid
+  version: ~1.1.0
+- package: github.com/termie/go-shutil
+- package: github.com/ugorji/go
+  subpackages:
+  - codec
+- package: github.com/valyala/fasttemplate
+- package: golang.org/x/net
+  subpackages:
+  - context
+  - proxy
+- package: golang.org/x/sys
+  subpackages:
+  - unix
+  - windows
+- package: gopkg.in/go-playground/validator.v8
+  version: ~9.2.1
+- package: gopkg.in/tchap/go-patricia.v2
+  version: ~2.2.6
+  subpackages:
+  - patricia
+testImport:
+- package: github.com/onsi/gomega
+  version: ~1.0.0
