@@ -58,6 +58,8 @@ calico-node-libnetwork.tgz: caliconode.created
 
 calico-node-libnetwork-go.tgz: $(GO_SRC_FILES)
 	-docker rmi calico/node-libnetwork-go
+	go build libnetwork-go/main.go
+	mv main libnetwork-go/main
 	docker build -t calico/node-libnetwork-go libnetwork-go
 	docker save calico/node-libnetwork-go:latest | gzip -c > calico-node-libnetwork-go.tgz
 
