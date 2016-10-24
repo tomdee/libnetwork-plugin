@@ -8,8 +8,8 @@ import (
 	"errors"
 
 	"github.com/docker/go-plugins-helpers/ipam"
-	logutils "github.com/libnetwork-plugin/libnetwork-go/utils/log"
-	osutils "github.com/libnetwork-plugin/libnetwork-go/utils/os"
+	logutils "github.com/projectcalico/libnetwork-plugin/utils/log"
+	osutils "github.com/projectcalico/libnetwork-plugin/utils/os"
 	"github.com/projectcalico/libcalico-go/lib/api"
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
 	caliconet "github.com/projectcalico/libcalico-go/lib/net"

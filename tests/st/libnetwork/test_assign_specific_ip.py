@@ -13,9 +13,13 @@
 # limitations under the License.
 import logging
 
+from subprocess import check_output
+
 from tests.st.test_base import TestBase
 from tests.st.utils.docker_host import DockerHost
-from tests.st.utils.utils import assert_number_endpoints
+from tests.st.utils.utils import (
+    assert_number_endpoints, get_ip, log_and_run, retry_until_success, ETCD_SCHEME,
+    ETCD_CA, ETCD_KEY, ETCD_CERT, ETCD_HOSTNAME_SSL)
 from tests.st.libnetwork.test_mainline_single_host import \
     ADDITIONAL_DOCKER_OPTIONS, POST_DOCKER_COMMANDS
 
@@ -37,14 +41,29 @@ class TestAssignIP(TestBase):
                        post_docker_commands=POST_DOCKER_COMMANDS,
                        start_calico=False) as host2:
 
-            host1.start_calico_node("--libnetwork")
-            host2.start_calico_node("--libnetwork")
+            run_plugin_command = 'docker run -d ' \
+                                 '--net=host --privileged ' + \
+                                 '-e CALICO_ETCD_AUTHORITY=%s:2379 ' \
+                                 '-v /run/docker/plugins:/run/docker/plugins ' \
+                                 '-v /var/run/docker.sock:/var/run/docker.sock ' \
+                                 '-v /lib/modules:/lib/modules ' \
+                                 '--name calico-node-libnetwork ' \
+                                 'calico/node-libnetwork /calico' % (get_ip(),)
+
+            host1.start_calico_node()
+            host1.execute(run_plugin_command)
+
+            host2.start_calico_node()
+            host2.execute(run_plugin_command)
 
             # Set up one endpoints on each host
-            workload1_ip = "192.168.1.101"
-            workload2_ip = "192.168.1.102"
-            subnet = "192.168.0.0/16"
-            network = host1.create_network("testnet", subnet=subnet)
+            workload1_ip = "192.167.1.101"
+            workload2_ip = "192.167.1.102"
+            subnet = "192.167.0.0/16"
+
+            network = host1.create_network(
+                    "testnet", subnet=subnet, driver="calico-net")
+
             workload1 = host1.create_workload("workload1",
                                               network=network,
                                               ip=workload1_ip)
@@ -59,7 +78,6 @@ class TestAssignIP(TestBase):
             # Check connectivity with assigned IPs
             workload1.assert_can_ping(workload2_ip, retries=5)
             workload2.assert_can_ping(workload1_ip, retries=5)
-
             # Disconnect endpoints from the network
             # Assert can't ping and endpoints are removed from Calico
             network.disconnect(host1, workload1)

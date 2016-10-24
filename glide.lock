@@ -1,5 +1,5 @@
-hash: f8cb9aebba981b6f83efa6250ce729acada1e2643494ae9fc036c55f9fab5423
-updated: 2016-10-20T12:20:21.58204312+03:00
+hash: 66c03c33b183a0a831320c168fff67b3f7db0ee4e9bf50c3140d556bec94e75c
+updated: 2016-10-21T14:59:50.318075492-07:00
 imports:
 - name: github.com/cloudfoundry-incubator/candiedyaml
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
@@ -71,7 +71,7 @@ imports:
 - name: github.com/docopt/docopt-go
   version: 784ddc588536785e7299f7272f39101f7faccc3f
 - name: github.com/ghodss/yaml
-  version: bea76d6a4713e18b7f5321a2b020738552def3ea
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/kelseyhightower/envconfig
   version: 9aca109c9aec4633fced9717c4a09ecab3d33111
 - name: github.com/labstack/echo
@@ -104,11 +104,8 @@ imports:
   subpackages:
   - libcontainer/user
 - name: github.com/projectcalico/libcalico-go
-  version: d6ce86635949b276b53b325faf791e98b9b1643a
+  version: 4d86b6458df42f96e0ac15f6a4130884376d6f02
   subpackages:
-  - calicoctl/commands
-  - calicoctl/commands/node
-  - calicoctl/resourcemgr
   - lib/api
   - lib/api/unversioned
   - lib/backend
@@ -118,15 +115,10 @@ imports:
   - lib/backend/model
   - lib/client
   - lib/errors
-  - lib/hash
   - lib/hwm
   - lib/net
   - lib/numorstring
   - lib/scope
-  - lib/selector
-  - lib/selector/parser
-  - lib/selector/tokenizer
-  - lib/validator
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus

@@ -1,4 +1,7 @@
 .git
+vendor
+*.tgz
+*.tar
 venv
 build
 busybox.tar

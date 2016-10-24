@@ -12,22 +12,22 @@ import (
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
 	caliconet "github.com/projectcalico/libcalico-go/lib/net"
 
-	"github.com/libnetwork-plugin/libnetwork-go/datastore"
-	logutils "github.com/libnetwork-plugin/libnetwork-go/utils/log"
-	"github.com/libnetwork-plugin/libnetwork-go/utils/netns"
-	networkutils "github.com/libnetwork-plugin/libnetwork-go/utils/network"
-	osutils "github.com/libnetwork-plugin/libnetwork-go/utils/os"
+	"github.com/projectcalico/libnetwork-plugin/datastore"
+	logutils "github.com/projectcalico/libnetwork-plugin/utils/log"
+	"github.com/projectcalico/libnetwork-plugin/utils/netns"
+	networkutils "github.com/projectcalico/libnetwork-plugin/utils/network"
+	osutils "github.com/projectcalico/libnetwork-plugin/utils/os"
 )
 
 type NetworkDriverMetadata struct {
-	containerName  string
-	orchestratorID string
-	fixedMac       string
+	containerName    string
+	orchestratorID   string
+	fixedMac         string
 
-	gatewayCIDRV4 string
-	gatewayCIDRV6 string
+	gatewayCIDRV4    string
+	gatewayCIDRV6    string
 
-	ifPrefix string
+	ifPrefix         string
 
 	DummyIpV4Nexthop string
 }
@@ -37,7 +37,7 @@ type NetworkDriver struct {
 	datastore datastore.Datastore
 	logger    *log.Logger
 
-	metadata NetworkDriverMetadata
+	metadata  NetworkDriverMetadata
 }
 
 func NewNetworkDriver(client *datastoreClient.Client, datastore datastore.Datastore, logger *log.Logger) network.Driver {
@@ -78,6 +78,9 @@ func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) erro
 
 	profile := api.NewProfile()
 	profile.Metadata.Name = request.NetworkID
+	profile.Spec.Tags = []string{request.NetworkID}
+	profile.Spec.EgressRules = []api.Rule{{Action: "allow"}}
+	profile.Spec.IngressRules = []api.Rule{{Action: "allow", Source: api.EntityRule{Tag: request.NetworkID}}}
 	profile, err := d.client.Profiles().Create(profile)
 	if err != nil {
 		d.logger.Println(err)
@@ -190,6 +193,7 @@ func (d NetworkDriver) DeleteNetwork(request *network.DeleteNetworkRequest) erro
 }
 
 func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*network.CreateEndpointResponse, error) {
+	logutils.JSONMessage(d.logger, "CreateEndpoint JSON=%v", request)
 	hostname, err := osutils.GetHostname()
 	if err != nil {
 		return nil, err
@@ -206,19 +210,27 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 		return nil, errors.New("No address assigned for endpoint")
 	}
 
-	if _, addressIP4, err := caliconet.ParseCIDR(request.Interface.Address); err == nil {
-		addresses = append(addresses, *addressIP4)
+	if request.Interface.Address != "" {
+		ip4, _, _ := net.ParseCIDR(request.Interface.Address)
+		d.logger.Printf("Parsed IP %v from (%v) \n", ip4, request.Interface.Address)
+		if ip4 != nil {
+			addresses = append(addresses, caliconet.IPNet{net.IPNet{IP: ip4, Mask: net.CIDRMask(32, 32)}})
+		}
 	}
+
+	//TODO IPv6 is broken
 	if _, addressIP6, err := caliconet.ParseCIDR(request.Interface.AddressIPv6); err == nil {
 		addresses = append(addresses, *addressIP6)
 	}
 
 	endpoint := api.NewWorkloadEndpoint()
-	endpoint.Metadata.Hostname = hostname
-	endpoint.Metadata.OrchestratorID = d.metadata.orchestratorID
-	endpoint.Metadata.WorkloadID = d.metadata.containerName
+	endpoint.Metadata.Node = hostname
+	endpoint.Metadata.Orchestrator = d.metadata.orchestratorID
+	endpoint.Metadata.Workload = d.metadata.containerName
 	endpoint.Metadata.Name = request.EndpointID
-	endpoint.Spec.MAC = caliconet.MAC{HardwareAddr: net.HardwareAddr(d.metadata.fixedMac)}
+	endpoint.Spec.InterfaceName, _ = networkutils.GenerateCaliInterfaceName(d.metadata.ifPrefix, request.EndpointID)
+	mac, _ := net.ParseMAC(d.metadata.fixedMac)
+	endpoint.Spec.MAC = caliconet.MAC{HardwareAddr: mac}
 
 	endpoint.Spec.Profiles = append(endpoint.Spec.Profiles, request.NetworkID)
 	endpoint.Spec.IPNetworks = append(endpoint.Spec.IPNetworks, addresses...)
@@ -240,6 +252,7 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 }
 
 func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) error {
+	logutils.JSONMessage(d.logger, "DeleteEndpoint JSON=%v", request)
 	hostname, err := osutils.GetHostname()
 	if err != nil {
 		return err
@@ -249,9 +262,9 @@ func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) er
 	d.logger.Printf("Removing endpoint %v\n", request.EndpointID)
 
 	endpoint := api.NewWorkloadEndpoint()
-	endpoint.Metadata.Hostname = hostname
-	endpoint.Metadata.OrchestratorID = d.metadata.orchestratorID
-	endpoint.Metadata.WorkloadID = d.metadata.containerName
+	endpoint.Metadata.Node = hostname
+	endpoint.Metadata.Orchestrator = d.metadata.orchestratorID
+	endpoint.Metadata.Workload = d.metadata.containerName
 	endpoint.Metadata.Name = request.EndpointID
 
 	if err = d.client.WorkloadEndpoints().Delete(endpoint.Metadata); err != nil {
@@ -264,11 +277,13 @@ func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) er
 	return err
 }
 
-func (d NetworkDriver) EndpointInfo(*network.InfoRequest) (*network.InfoResponse, error) {
+func (d NetworkDriver) EndpointInfo(request *network.InfoRequest) (*network.InfoResponse, error) {
+	logutils.JSONMessage(d.logger, "EndpointInfo JSON=%v", request)
 	return nil, nil
 }
 
 func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse, error) {
+	logutils.JSONMessage(d.logger, "Join JSON=%v", request)
 	var hostInterfaceName, tempInterfaceName string
 	var err error
 	if hostInterfaceName, err = networkutils.GenerateCaliInterfaceName(d.metadata.ifPrefix, request.EndpointID); err != nil {
@@ -276,18 +291,18 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		return nil, err
 	}
 	if tempInterfaceName, err = networkutils.GenerateCaliInterfaceName("tmp", request.EndpointID); err != nil {
-		d.logger.Println(err)
+		d.logger.Printf("Error generating interface name: %v", err)
 		return nil, err
 	}
 
 	if err = netns.CreateVeth(hostInterfaceName, tempInterfaceName); err != nil {
-		d.logger.Println(err)
+		d.logger.Printf("Error creating veth: %v", err)
 		return nil, err
 	}
 
 	if err = netns.SetVethMac(tempInterfaceName, d.metadata.fixedMac); err != nil {
 		_, err = netns.RemoveVeth(hostInterfaceName)
-		d.logger.Println(err)
+		d.logger.Printf("Error removing veth: %v", err)
 		return nil, err
 	}
 
@@ -298,17 +313,17 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 	)
 
 	if networkData, err = d.datastore.GetNetwork(request.NetworkID); err != nil {
-		d.logger.Println(err)
+		d.logger.Printf("Error getting network: %v", err)
 		return nil, err
 	}
 
 	// Extract relevant data from the Network data.
 	if gatewayV4, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv4Data, IPv4); err != nil {
-		d.logger.Println(err)
+		d.logger.Printf("Error getting gateway pool V4: %v", err)
 		return nil, err
 	}
 	if gatewayV6, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv6Data, IPv6); err != nil {
-		d.logger.Println(err)
+		d.logger.Printf("Error getting gateway pool V6: %v", err)
 		return nil, err
 	}
 
