@@ -18,7 +18,7 @@ from tests.st.libnetwork.test_mainline_single_host import \
 from tests.st.test_base import TestBase
 from tests.st.utils.docker_host import DockerHost
 from tests.st.utils.exceptions import CommandExecError
-from tests.st.utils.utils import assert_network, assert_profile, \
+from tests.st.utils.utils import get_ip, assert_network, assert_profile, \
     assert_number_endpoints, get_profile_name
 
 
@@ -48,14 +48,26 @@ class MultiHostMainline(TestBase):
                        post_docker_commands=POST_DOCKER_COMMANDS,
                        start_calico=False) as host2:
             # TODO work IPv6 into this test too
-            host1.start_calico_node("--libnetwork")
-            host2.start_calico_node("--libnetwork")
+            run_plugin_command = 'docker run -d ' \
+                                 '--net=host --privileged ' + \
+                                 '-e CALICO_ETCD_AUTHORITY=%s:2379 ' \
+                                 '-v /run/docker/plugins:/run/docker/plugins ' \
+                                 '-v /var/run/docker.sock:/var/run/docker.sock ' \
+                                 '-v /lib/modules:/lib/modules ' \
+                                 '--name calico-node-libnetwork ' \
+                                 'calico/node-libnetwork /calico' % (get_ip(),)
+
+            host1.start_calico_node()
+            host1.execute(run_plugin_command)
+
+            host2.start_calico_node()
+            host2.execute(run_plugin_command)
 
             # Create the networks on host1, but it should be usable from all
             # hosts.  We create one network using the default driver, and the
             # other using the Calico driver.
-            network1 = host1.create_network("testnet1", ipam_driver="default")
-            network2 = host1.create_network("testnet2", ipam_driver="calico")
+            network1 = host1.create_network("testnet1", ipam_driver="default", driver="calico-net")
+            network2 = host1.create_network("testnet2", ipam_driver="calico-ipam", driver="calico-net")
 
             # Assert that the networks can be seen on host2
             assert_network(host2, network2)

@@ -1,8 +1,7 @@
 build
-libnetwork-go/vendor
+vendor
 certs
 dist
-venv
 env
 .idea
 .vscode
@@ -10,15 +9,8 @@ env
 *~
 .coverage
 cover
-busybox.tar
-calico-node.tar
-routereflector.tar
 calicobuild.created
 caliconode.created
-calico_containers/pycalico.egg-info/
-busybox.tgz
-calico-node-libnetwork.tgz
-calico-node-libnetwork-go.tgz
-calico-node.tgz
 calicoctl
+*.tar
 
