@@ -1,8 +1,6 @@
-hash: 66c03c33b183a0a831320c168fff67b3f7db0ee4e9bf50c3140d556bec94e75c
-updated: 2016-10-21T14:59:50.318075492-07:00
+hash: 1753d1d35f7c486c5fff9b31b3309b909d85ce8c82cbf586e58baec25fe8f0c0
+updated: 2016-10-26T13:02:49.659431353-07:00
 imports:
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/etcd
   version: 83347907774bf36cbb261c594a32fd7b0f5dd9f6
   subpackages:
@@ -13,37 +11,32 @@ imports:
   - pkg/transport
   - pkg/types
 - name: github.com/coreos/go-systemd
-  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  version: bfdc81d0d7e0fb19447b08571f63b774495251ce
   subpackages:
   - activation
+  - daemon
   - journal
   - util
 - name: github.com/coreos/pkg
-  version: 3ac0863d7acf3bc44daf49afef8919af12f704ef
+  version: fa29b1d70f0beaddd4c7021607cc3c3be8ce94b8
   subpackages:
   - capnslog
   - dlopen
 - name: github.com/docker/distribution
-  version: 12acdf0a6c1e56d965ac6eb395d2bce687bf22fc
+  version: 8234784a1a66bfee4a6d72d0a3cbd453b7f903d7
   subpackages:
+  - digest
   - reference
-- name: github.com/docker/docker
-  version: bb80604a0b200140a440675348c848a137a1b2e2
-  subpackages:
-  - daemon/graphdriver
-  - pkg/archive
-  - pkg/authorization
-  - volume
 - name: github.com/docker/engine-api
   version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:
+  - client
   - client/transport
   - client/transport/cancellable
   - types
   - types/blkiodev
   - types/container
   - types/filters
-  - types/mount
   - types/network
   - types/reference
   - types/registry
@@ -51,7 +44,6 @@ imports:
   - types/swarm
   - types/time
   - types/versions
-  - types/versions/v1p20
 - name: github.com/docker/go-connections
   version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
   subpackages:
@@ -61,48 +53,23 @@ imports:
 - name: github.com/docker/go-plugins-helpers
   version: 8a0198e77ac4e4ee167222caf6894cb32386c5fc
   subpackages:
-  - graphdriver
   - ipam
   - network
   - sdk
-  - volume
 - name: github.com/docker/go-units
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
-- name: github.com/docopt/docopt-go
-  version: 784ddc588536785e7299f7272f39101f7faccc3f
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/kelseyhightower/envconfig
   version: 9aca109c9aec4633fced9717c4a09ecab3d33111
-- name: github.com/labstack/echo
-  version: 04e6901d05b58ddbae579a6252a3d1bb3f334adc
-  subpackages:
-  - context
-  - engine
-  - log
-- name: github.com/labstack/gommon
-  version: fc11faa173d0671701574081bf292367d11e9a42
-  subpackages:
-  - color
-  - log
-- name: github.com/mattn/go-colorable
-  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
-- name: github.com/mattn/go-isatty
-  version: 3a115632dcd687f9c8cd01679c83a06a0e21c1f3
-- name: github.com/mcuadros/go-version
-  version: d52711f8d6bea8dc01efafdb68ad95a4e2606630
 - name: github.com/Microsoft/go-winio
   version: 4f1a71750d95a5a8a46c40a67ffbed8129c2f138
-- name: github.com/mitchellh/go-ps
-  version: e2d21980687ce16e58469d98dcee92d27fbbd7fb
-- name: github.com/olekukonko/tablewriter
-  version: cca8bbc0798408af109aaaa239cbd2634846b340
-- name: github.com/onsi/ginkgo
-  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
 - name: github.com/opencontainers/runc
   version: c91b5bea4830a57eac7882d7455d59518cdf70ec
   subpackages:
   - libcontainer/user
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/projectcalico/libcalico-go
   version: 4d86b6458df42f96e0ac15f6a4130884376d6f02
   subpackages:
@@ -120,17 +87,13 @@ imports:
   - lib/numorstring
   - lib/scope
 - name: github.com/satori/go.uuid
-  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
-- name: github.com/termie/go-shutil
-  version: bcacb06fecaeec8dc42af03c87c6949f4a05c74c
 - name: github.com/ugorji/go
   version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
   subpackages:
   - codec
-- name: github.com/valyala/fasttemplate
-  version: 3b874956e03f1636d171bda64b130f9135f42cff
 - name: golang.org/x/net
   version: 6acef71eb69611914f7a30939ea9f6e194c78172
   subpackages:
@@ -141,14 +104,10 @@ imports:
   subpackages:
   - unix
   - windows
-- name: gopkg.in/go-playground/validator.v8
-  version: 493dfb6209fcb493fcdbc2a0f14b882f2d53979f
 - name: gopkg.in/tchap/go-patricia.v2
   version: 666120de432aea38ab06bd5c818f04f4129882c9
   subpackages:
   - patricia
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
-testImports:
-- name: github.com/onsi/gomega
-  version: a78ae492d53aad5a7a232d0d0462c14c400e3ee7
+testImports: []
