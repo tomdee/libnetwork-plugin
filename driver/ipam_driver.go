@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/docker/go-plugins-helpers/ipam"
 	"github.com/projectcalico/libcalico-go/lib/api"
@@ -169,6 +169,7 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 			_, ipNet, err := caliconet.ParseCIDR(request.PoolID)
 
 			if err != nil {
+				err = errors.Wrapf(err, "Invalid CIDR - %v", request.PoolID)
 				return nil, err
 			}
 			pool, err = poolsClient.Get(api.PoolMetadata{CIDR: *ipNet})
@@ -214,13 +215,13 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 	} else {
 		i.logger.Println("Reserving a specific address in Calico pools")
 		ip := net.ParseIP(request.Address)
-		err := i.client.IPAM().AssignIP(
-			datastoreClient.AssignIPArgs{
-				IP:       caliconet.IP{IP: ip},
-				Hostname: hostname,
-			},
-		)
+		ipArgs := datastoreClient.AssignIPArgs{
+			IP:       caliconet.IP{IP: ip},
+			Hostname: hostname,
+		}
+		err := i.client.IPAM().AssignIP(ipArgs)
 		if err != nil {
+			err = errors.Wrapf(err, "IP assignment error, data: %+v", ipArgs)
 			i.logger.Println(err)
 			return nil, err
 		}
@@ -257,8 +258,10 @@ func (i IpamDriver) ReleaseAddress(request *ipam.ReleaseAddressRequest) error {
 	// in which case it is a no-op.  The release_ips call may raise a
 	// RuntimeError if there are repeated clashing updates to the same IP block,
 	// this is not an expected condition.
-	_, err := i.client.IPAM().ReleaseIPs([]caliconet.IP{ip})
+	ips := []caliconet.IP{ip}
+	_, err := i.client.IPAM().ReleaseIPs(ips)
 	if err != nil {
+		err = errors.Wrapf(err, "IPs releasing error, ips: %v", ips)
 		i.logger.Println(err)
 		return err
 	}

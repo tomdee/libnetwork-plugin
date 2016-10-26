@@ -168,10 +168,9 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 	logutils.JSONMessage(d.logger, "CreateEndpoint JSON=%v", request)
 	hostname, err := osutils.GetHostname()
 	if err != nil {
+		err = errors.Wrap(err, "Hostname fetching error")
 		return nil, err
 	}
-
-	logutils.JSONMessage(d.logger, "CreateEndpoint JSON=%v", request)
 	d.logger.Printf("Creating endpoint %v\n", request.EndpointID)
 
 	var (
@@ -190,7 +189,7 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 		}
 	}
 
-	//TODO IPv6 is broken
+	// TODO IPv6 is broken
 	if _, addressIP6, err := caliconet.ParseCIDR(request.Interface.AddressIPv6); err == nil {
 		addresses = append(addresses, *addressIP6)
 	}
@@ -247,6 +246,7 @@ func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) er
 	logutils.JSONMessage(d.logger, "DeleteEndpoint JSON=%v", request)
 	hostname, err := osutils.GetHostname()
 	if err != nil {
+		err = errors.Wrap(err, "Hostname fetching error")
 		return err
 	}
 
@@ -260,6 +260,7 @@ func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) er
 	endpoint.Metadata.Name = request.EndpointID
 
 	if err = d.client.WorkloadEndpoints().Delete(endpoint.Metadata); err != nil {
+		err = errors.Wrapf(err, "Endpoint removal error, data: %+v", endpoint.Metadata)
 		log.Println(err)
 		return err
 	}
@@ -403,6 +404,9 @@ func (d NetworkDriver) Leave(request *network.LeaveRequest) error {
 	logutils.JSONMessage(d.logger, "Leave response JSON=%v", request)
 	caliName, err := networkutils.GenerateCaliInterfaceName(d.metadata.ifPrefix, request.EndpointID)
 	if err != nil {
+		err = errors.Wrapf(
+			err, "Cali interface generation error, ifPrefix = %v, endpoint id = %v",
+			d.metadata.ifPrefix, request.EndpointID)
 		d.logger.Println(err)
 		return err
 	}
