@@ -7,11 +7,11 @@ import (
 
 	"github.com/docker/go-plugins-helpers/ipam"
 	"github.com/docker/go-plugins-helpers/network"
-	"github.com/projectcalico/libnetwork-plugin/driver"
 	"github.com/projectcalico/libcalico-go/lib/api"
+	"github.com/projectcalico/libnetwork-plugin/driver"
 
-	libnetworkDatastore "github.com/projectcalico/libnetwork-plugin/datastore"
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
+	libnetworkDatastore "github.com/projectcalico/libnetwork-plugin/datastore"
 )
 
 const (

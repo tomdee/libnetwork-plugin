@@ -13,4 +13,6 @@ calicobuild.created
 caliconode.created
 calicoctl
 *.tar
+libnetwork-plugin
+main
 

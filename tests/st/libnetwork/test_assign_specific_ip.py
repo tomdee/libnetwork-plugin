@@ -42,13 +42,13 @@ class TestAssignIP(TestBase):
                        start_calico=False) as host2:
 
             run_plugin_command = 'docker run -d ' \
-                                 '--net=host --privileged ' + \
-                                 '-e CALICO_ETCD_AUTHORITY=%s:2379 ' \
-                                 '-v /run/docker/plugins:/run/docker/plugins ' \
-                                 '-v /var/run/docker.sock:/var/run/docker.sock ' \
-                                 '-v /lib/modules:/lib/modules ' \
-                                 '--name calico-node-libnetwork ' \
-                                 'calico/node-libnetwork /calico' % (get_ip(),)
+                                '--net=host --privileged ' + \
+                                '-e CALICO_ETCD_AUTHORITY=%s:2379 ' \
+                                '-v /run/docker/plugins:/run/docker/plugins ' \
+                                '-v /var/run/docker.sock:/var/run/docker.sock ' \
+                                '-v /lib/modules:/lib/modules ' \
+                                '--name calico-node-libnetwork ' \
+                                'calico/node-libnetwork /calico' % (get_ip(),)
 
             host1.start_calico_node()
             host1.execute(run_plugin_command)
@@ -57,19 +57,21 @@ class TestAssignIP(TestBase):
             host2.execute(run_plugin_command)
 
             # Set up one endpoints on each host
-            workload1_ip = "192.167.1.101"
-            workload2_ip = "192.167.1.102"
-            subnet = "192.167.0.0/16"
+            workload1_ip = "192.168.1.101"
+            workload2_ip = "192.168.1.102"
+            subnet = "192.168.0.0/16"
+
+            
 
             network = host1.create_network(
-                    "testnet", subnet=subnet, driver="calico-net")
-
+                    "testnet", subnet=subnet, driver="calico-net", ipam_driver="calico-ipam")
+            
             workload1 = host1.create_workload("workload1",
-                                              network=network,
-                                              ip=workload1_ip)
+                                            network=network,
+                                            ip=workload1_ip)
             workload2 = host2.create_workload("workload2",
-                                              network=network,
-                                              ip=workload2_ip)
+                                            network=network,
+                                            ip=workload2_ip)
 
             self.assertEquals(workload1_ip, workload1.ip)
             self.assertEquals(workload2_ip, workload2.ip)

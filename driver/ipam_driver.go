@@ -8,11 +8,11 @@ import (
 	"errors"
 
 	"github.com/docker/go-plugins-helpers/ipam"
-	logutils "github.com/projectcalico/libnetwork-plugin/utils/log"
-	osutils "github.com/projectcalico/libnetwork-plugin/utils/os"
 	"github.com/projectcalico/libcalico-go/lib/api"
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
 	caliconet "github.com/projectcalico/libcalico-go/lib/net"
+	logutils "github.com/projectcalico/libnetwork-plugin/utils/log"
+	osutils "github.com/projectcalico/libnetwork-plugin/utils/os"
 )
 
 type IpamDriverMetadata struct {
@@ -234,15 +234,13 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		return nil, err
 	}
 
-	_, ipNet, err := caliconet.ParseCIDR(fmt.Sprint(IPs[0]))
-	if err != nil {
-		i.logger.Println(err)
-		return nil, err
-	}
+	ipStr := fmt.Sprint(IPs[0])
+	ip := net.ParseIP(ipStr)
+	size, _ := ip.DefaultMask().Size()
 
 	// Return the IP as a CIDR.
 	resp := &ipam.RequestAddressResponse{
-		Address: fmt.Sprint(ipNet),
+		Address: fmt.Sprintf("%v/%v", IPs[0], size),
 	}
 
 	logutils.JSONMessage(i.logger, "RequestAddress response JSON=%s", resp)
