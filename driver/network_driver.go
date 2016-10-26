@@ -329,7 +329,7 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		return nil, err
 	}
 	if gatewayV6, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv6Data, IPv6); err != nil {
-		err = errors.Wrapf(err, "Error while getting gateway pool for %+v, %v", networkData.IPv4Data, IPv4)
+		err = errors.Wrapf(err, "Error while getting gateway pool for %+v, %v", networkData.IPv6Data, IPv6)
 		d.logger.Printf("Error getting gateway pool V6: %v", err)
 		return nil, err
 	}
