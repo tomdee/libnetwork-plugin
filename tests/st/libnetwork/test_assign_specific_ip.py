@@ -32,14 +32,11 @@ class TestAssignIP(TestBase):
         Test that a libnetwork assigned IP is allocated to the container with
         Calico when using the '--ip' flag on docker run.
         """
-        with DockerHost('host1',
+        with DockerHost('host',
                         additional_docker_options=ADDITIONAL_DOCKER_OPTIONS,
-                        post_docker_commands=POST_DOCKER_COMMANDS,
-                        start_calico=False) as host1, \
-            DockerHost('host2',
-                       additional_docker_options=ADDITIONAL_DOCKER_OPTIONS,
-                       post_docker_commands=POST_DOCKER_COMMANDS,
-                       start_calico=False) as host2:
+                        post_docker_commands=["docker load -i /code/busybox.tar",
+                        "docker load -i /code/calico-node-libnetwork.tar"],
+                        start_calico=False) as host:
 
             run_plugin_command = 'docker run -d ' \
                                 '--net=host --privileged ' + \
@@ -50,41 +47,17 @@ class TestAssignIP(TestBase):
                                 '--name calico-node-libnetwork ' \
                                 'calico/node-libnetwork /calico' % (get_ip(),)
 
-            host1.start_calico_node()
-            host1.execute(run_plugin_command)
-
-            host2.start_calico_node()
-            host2.execute(run_plugin_command)
-
-            # Set up one endpoints on each host
-            workload1_ip = "192.168.1.101"
-            workload2_ip = "192.168.1.102"
+            host.execute(run_plugin_command)
             subnet = "192.168.0.0/16"
+            host.calicoctl('pool add %s' % subnet)
 
-            
+            workload_ip = "192.168.1.101"
 
-            network = host1.create_network(
-                    "testnet", subnet=subnet, driver="calico-net", ipam_driver="calico-ipam")
-            
-            workload1 = host1.create_workload("workload1",
-                                            network=network,
-                                            ip=workload1_ip)
-            workload2 = host2.create_workload("workload2",
-                                            network=network,
-                                            ip=workload2_ip)
+            network = host.create_network(
+                "specificipnet", subnet=subnet, driver="calico-net", ipam_driver="calico-ipam")
 
-            self.assertEquals(workload1_ip, workload1.ip)
-            self.assertEquals(workload2_ip, workload2.ip)
+            workload = host.create_workload("workload1",
+                                              network=network,
+                                              ip=workload_ip)
 
-            # Allow network to converge
-            # Check connectivity with assigned IPs
-            workload1.assert_can_ping(workload2_ip, retries=5)
-            workload2.assert_can_ping(workload1_ip, retries=5)
-            # Disconnect endpoints from the network
-            # Assert can't ping and endpoints are removed from Calico
-            network.disconnect(host1, workload1)
-            network.disconnect(host2, workload2)
-            workload1.assert_cant_ping(workload2_ip, retries=5)
-            assert_number_endpoints(host1, 0)
-            assert_number_endpoints(host2, 0)
-            network.delete()
+            self.assertEquals(workload_ip, workload.ip)

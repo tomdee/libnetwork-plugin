@@ -48,12 +48,3 @@ func IsUsingCalicoIpam(gateway *caliconet.IPNet, gatewayCIDRV4, gatewayCIDRV6 st
 
 	return false
 }
-
-// GenerateCaliInterfaceName generates a name for a calico veth, given the endpoint ID
-// This takes a prefix, and then truncates the EP ID.
-func GenerateCaliInterfaceName(prefix, epID string) (string, error) {
-	if len(prefix) > 4 {
-		return "", errors.New("Prefix must be 4 characters or less.")
-	}
-	return fmt.Sprintf("%v%v", prefix, epID[:11]), nil
-}

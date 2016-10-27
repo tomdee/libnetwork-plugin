@@ -27,23 +27,14 @@ POST_DOCKER_COMMANDS = ["docker load -i /code/calico-node.tar",
                         "docker load -i /code/busybox.tar",
                         "docker load -i /code/calico-node-libnetwork.tar"]
 
-if ETCD_SCHEME == "https":
-    ADDITIONAL_DOCKER_OPTIONS = "--cluster-store=etcd://%s:2379 " \
-                                "--cluster-store-opt kv.cacertfile=%s " \
-                                "--cluster-store-opt kv.certfile=%s " \
-                                "--cluster-store-opt kv.keyfile=%s " % \
-                                (ETCD_HOSTNAME_SSL, ETCD_CA, ETCD_CERT,
-                                 ETCD_KEY)
-else:
-    ADDITIONAL_DOCKER_OPTIONS = "--cluster-store=etcd://%s:2379 " % \
-                                utils.get_ip()
+ADDITIONAL_DOCKER_OPTIONS = "--cluster-store=etcd://%s:2379 " % utils.get_ip()
+
 
 class TestMainline(TestBase):
     def test_mainline(self):
         """
         Setup two endpoints on one host and check connectivity then teardown.
         """
-        # TODO - add in IPv6 as part of this flow.
         with DockerHost('host',
                         additional_docker_options=ADDITIONAL_DOCKER_OPTIONS,
                         post_docker_commands=POST_DOCKER_COMMANDS,
@@ -70,8 +61,7 @@ class TestMainline(TestBase):
             assert_number_endpoints(host, 2)
 
             # Assert that the profile has been created for the network
-            profile_name = get_profile_name(host, network)
-            assert_profile(host, profile_name)
+            assert_profile(host, "testnet")
 
             # Allow network to converge
             # Check connectivity.
@@ -98,6 +88,6 @@ class TestMainline(TestBase):
 
             # Remove the network and assert profile is removed
             network.delete()
-            self.assertRaises(AssertionError, assert_profile, host, profile_name)
 
-            # TODO - Remove this calico node
+            # TODO - should deleting the network delete the profile or not?
+            # self.assertRaises(AssertionError, assert_profile, host, "testnet")

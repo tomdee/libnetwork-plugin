@@ -162,8 +162,8 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		// otherwise assign from the requested pool
 		if request.PoolID == PoolIDV4 {
 			version = 4
-		} else if request.PoolID == i.metadata.poolIDV6 {
-			version = 6
+		//} else if request.PoolID == i.metadata.poolIDV6 {
+		//	version = 6
 		} else {
 			poolsClient := i.client.Pools()
 			_, ipNet, err := caliconet.ParseCIDR(request.PoolID)
@@ -181,17 +181,19 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 				return nil, errors.New(message)
 			}
 			version = ipNet.Version()
+			poolV4 = &caliconet.IPNet{IPNet: pool.Metadata.CIDR.IPNet}
+			//TODO - v6
 		}
 
 		if version == 4 {
 			numV4 = 1
 			numV6 = 0
-			poolV4 = &caliconet.IPNet{IPNet: pool.Metadata.CIDR.IPNet}
-		} else {
-			numV4 = 0
-			numV6 = 1
-			poolV6 = &caliconet.IPNet{IPNet: pool.Metadata.CIDR.IPNet}
-		}
+
+		} //else {
+		//	numV4 = 0
+		//	numV6 = 1
+		//	poolV6 = &caliconet.IPNet{IPNet: pool.Metadata.CIDR.IPNet}
+		//}
 
 		// Auto assign an IP based on whether the IPv4 or IPv6 pool was selected.
 		// We auto-assign from all available pools with affinity based on our
