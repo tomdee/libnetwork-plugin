@@ -203,8 +203,16 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 	mac, _ := net.ParseMAC(d.metadata.fixedMac)
 	endpoint.Spec.MAC = caliconet.MAC{HardwareAddr: mac}
 
-	dockerCli, _ := dockerClient.NewEnvClient()
-	networkData, _ := dockerCli.NetworkInspect(context.Background(), request.NetworkID)
+	dockerCli, err := dockerClient.NewEnvClient()
+	if err != nil {
+		err = errors.Wrap(err, "Error while attempting to instantiate docker client from env")
+		return nil, err
+	}
+	networkData, err := dockerCli.NetworkInspect(context.Background(), request.NetworkID)
+	if err != nil {
+		err = errors.Wrapf(err, "Network %v inspection error", request.NetworkID)
+		return nil, err
+	}
 
 	var profile *api.Profile
 
@@ -213,7 +221,7 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 		profile.Metadata.Name = networkData.Name
 		profile.Spec.Tags = []string{networkData.Name}
 		profile.Spec.EgressRules = []api.Rule{{Action: "allow"}}
-		profile.Spec.IngressRules = []api.Rule{{Action: "allow", Source: api.EntityRule{Tag: request.NetworkID}}}
+		profile.Spec.IngressRules = []api.Rule{{Action: "allow", Source: api.EntityRule{Tag: networkData.Name}}}
 		if _, err := d.client.Profiles().Create(profile); err != nil {
 			log.Println(err)
 			return nil, err

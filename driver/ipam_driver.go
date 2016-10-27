@@ -235,13 +235,10 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		return nil, err
 	}
 
-	ipStr := fmt.Sprint(IPs[0])
-	ip := net.ParseIP(ipStr)
-	size, _ := ip.DefaultMask().Size()
-
 	// Return the IP as a CIDR.
 	resp := &ipam.RequestAddressResponse{
-		Address: fmt.Sprintf("%v/%v", IPs[0], size),
+		// TODO: need more investigation about the subnet size to use
+		Address: fmt.Sprintf("%v/%v", IPs[0], "32"),
 	}
 
 	logutils.JSONMessage(i.logger, "RequestAddress response JSON=%s", resp)
