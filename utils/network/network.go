@@ -2,7 +2,6 @@ package network
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"log"
 

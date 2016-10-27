@@ -116,7 +116,7 @@ func (d NetworkDriver) CreateEndpoint(request *network.CreateEndpointRequest) (*
 		d.logger.Printf("Parsed IP %v from (%v) \n", ip4, request.Interface.Address)
 		if ip4 != nil {
 			addresses = append(addresses, caliconet.IPNet{net.IPNet{IP: ip4, Mask: net.CIDRMask(32, 32)}})
-		}else{
+		} else {
 			//TODO - error handling?
 		}
 	}
@@ -201,7 +201,6 @@ func (d NetworkDriver) DeleteEndpoint(request *network.DeleteEndpointRequest) er
 	logutils.JSONMessage(d.logger, "DeleteEndpoint JSON=%v", request)
 	d.logger.Printf("Removing endpoint %v\n", request.EndpointID)
 
-
 	endpoint := api.NewWorkloadEndpoint()
 	endpoint.Metadata.Node = hostname
 	endpoint.Metadata.Orchestrator = d.metadata.orchestratorID
@@ -241,7 +240,7 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 	//	THe other end is given a temporary name. It's moved into the final network namespace by libnetwork itself.
 	var err error
 	hostInterfaceName := "cali" + request.EndpointID[:min(11, len(request.EndpointID))]
-	tempInterfaceName := "temp" +request.EndpointID[:min(11, len(request.EndpointID))]
+	tempInterfaceName := "temp" + request.EndpointID[:min(11, len(request.EndpointID))]
 
 	if err = netns.CreateVeth(hostInterfaceName, tempInterfaceName); err != nil {
 		err = errors.Wrapf(
@@ -269,13 +268,12 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 
 	// TODO - what should it do
 	//        if gateway_ip4:
-         //   json_response["Gateway"] = DUMMY_IPV4_NEXTHOP
-         //   static_routes.append({
-         //       "Destination": DUMMY_IPV4_NEXTHOP + "/32",
-         //       "RouteType": 1,  # 1 = CONNECTED
-         //       "NextHop": ""
-         //   })
-
+	//   json_response["Gateway"] = DUMMY_IPV4_NEXTHOP
+	//   static_routes.append({
+	//       "Destination": DUMMY_IPV4_NEXTHOP + "/32",
+	//       "RouteType": 1,  # 1 = CONNECTED
+	//       "NextHop": ""
+	//   })
 
 	//endpoints, err := d.client.WorkloadEndpoints().List(api.WorkloadEndpointMetadata{})
 	//if err != nil {
@@ -302,12 +300,12 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		"static routes to the host")
 
 	//if useV4 {
-		resp.Gateway = d.metadata.DummyIpV4Nexthop
-		resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
-			Destination: d.metadata.DummyIpV4Nexthop + "/32",
-			RouteType:   1, // 1 = CONNECTED
-			NextHop:     "",
-		})
+	resp.Gateway = d.metadata.DummyIpV4Nexthop
+	resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
+		Destination: d.metadata.DummyIpV4Nexthop + "/32",
+		RouteType:   1, // 1 = CONNECTED
+		NextHop:     "",
+	})
 	//}
 	//if useV6 {
 	//	// Here, we'll report the link local address of the host's cali interface to libnetwork

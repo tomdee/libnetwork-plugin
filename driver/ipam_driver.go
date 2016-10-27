@@ -162,8 +162,8 @@ func (i IpamDriver) RequestAddress(request *ipam.RequestAddressRequest) (*ipam.R
 		// otherwise assign from the requested pool
 		if request.PoolID == PoolIDV4 {
 			version = 4
-		//} else if request.PoolID == i.metadata.poolIDV6 {
-		//	version = 6
+			//} else if request.PoolID == i.metadata.poolIDV6 {
+			//	version = 6
 		} else {
 			poolsClient := i.client.Pools()
 			_, ipNet, err := caliconet.ParseCIDR(request.PoolID)

@@ -40,6 +40,31 @@ calico-node.tar:
 calico-node-libnetwork.tar: caliconode.created
 	docker save calico/node-libnetwork:latest -o calico-node-libnetwork.tar
 
+# Install or update the tools used by the build
+.PHONY: update-tools
+update-tools:
+	go get -u github.com/Masterminds/glide
+	go get -u github.com/kisielk/errcheck
+	go get -u golang.org/x/tools/cmd/goimports
+	go get -u github.com/golang/lint/golint
+	go get -u github.com/onsi/ginkgo/ginkgo
+
+# Perform static checks on the code. The golint checks are allowed to fail, the others must pass.
+.PHONY: static-checks
+static-checks: vendor
+	# Format the code and clean up imports
+	find -name '*.go'  -not -path "./vendor/*" |xargs goimports -w
+
+	# Check for coding mistake and missing error handling
+	go vet -x $(glide nv)
+	errcheck . ./datastore/... ./utils/... ./driver/...
+
+	# Check code style
+	-golint main.go
+	-golint datastore
+	-golint utils
+	-golint driver
+
 st:  dist/calicoctl busybox.tar calico-node.tar calico-node-libnetwork.tar run-etcd
 	# Use the host, PID and network namespaces from the host.
 	# Privileged is needed since 'calico node' write to /proc (to enable ip_forwarding)
