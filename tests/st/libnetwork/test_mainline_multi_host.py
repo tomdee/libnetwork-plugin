@@ -63,8 +63,8 @@ class MultiHostMainline(TestBase):
             # Create the networks on host1, but it should be usable from all
             # hosts.  We create one network using the default driver, and the
             # other using the Calico driver.
-            testnet1 = host1.create_network("testnet1", ipam_driver="calico-ipam", driver="calico-net")
-            testnet2 = host1.create_network("testnet2", ipam_driver="calico-ipam", driver="calico-net")
+            testnet1 = host1.create_network("testnet1", ipam_driver="calico-ipam", driver="calico")
+            testnet2 = host1.create_network("testnet2", ipam_driver="calico-ipam", driver="calico")
 
             # Assert that the networks can be seen on host2
             assert_network(host2, testnet1)

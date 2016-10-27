@@ -15,7 +15,6 @@ import (
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
 	caliconet "github.com/projectcalico/libcalico-go/lib/net"
 
-	"github.com/projectcalico/libnetwork-plugin/datastore"
 	logutils "github.com/projectcalico/libnetwork-plugin/utils/log"
 	"github.com/projectcalico/libnetwork-plugin/utils/netns"
 	osutils "github.com/projectcalico/libnetwork-plugin/utils/os"
@@ -36,7 +35,6 @@ type NetworkDriverMetadata struct {
 
 type NetworkDriver struct {
 	client    *datastoreClient.Client
-	datastore datastore.Datastore
 	logger    *log.Logger
 
 	metadata NetworkDriverMetadata
@@ -46,11 +44,10 @@ type NetworkDriver struct {
 // TODO - do we really need the NetworkDriverMetadata struct
 // TODO - can the driver be called just calico (and not calico-net)
 
-func NewNetworkDriver(client *datastoreClient.Client, datastore datastore.Datastore, logger *log.Logger) network.Driver {
+func NewNetworkDriver(client *datastoreClient.Client, logger *log.Logger) network.Driver {
 	return NetworkDriver{
 		client:    client,
 		logger:    logger,
-		datastore: datastore,
 
 		metadata: NetworkDriverMetadata{
 

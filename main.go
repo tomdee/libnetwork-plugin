@@ -11,18 +11,16 @@ import (
 	"github.com/projectcalico/libnetwork-plugin/driver"
 
 	datastoreClient "github.com/projectcalico/libcalico-go/lib/client"
-	libnetworkDatastore "github.com/projectcalico/libnetwork-plugin/datastore"
 )
 
 const (
 	ipamPluginName    = "calico-ipam"
-	networkPluginName = "calico-net"
+	networkPluginName = "calico"
 )
 
 var (
 	config    *api.ClientConfig
 	client    *datastoreClient.Client
-	datastore libnetworkDatastore.Datastore
 
 	logger *log.Logger
 )
@@ -36,16 +34,13 @@ func init() {
 	if client, err = datastoreClient.New(*config); err != nil {
 		panic(err)
 	}
-	if datastore, err = libnetworkDatastore.New(*config); err != nil {
-		panic(err)
-	}
 
 	logger = log.New(os.Stdout, "", log.LstdFlags)
 }
 
 func main() {
 	errChannel := make(chan error)
-	networkHandler := network.NewHandler(driver.NewNetworkDriver(client, datastore, logger))
+	networkHandler := network.NewHandler(driver.NewNetworkDriver(client, logger))
 	ipamHandler := ipam.NewHandler(driver.NewIpamDriver(client, logger))
 
 	go func(c chan error) {

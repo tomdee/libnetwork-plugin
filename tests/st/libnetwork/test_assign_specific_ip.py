@@ -54,7 +54,7 @@ class TestAssignIP(TestBase):
             workload_ip = "192.168.1.101"
 
             network = host.create_network(
-                "specificipnet", subnet=subnet, driver="calico-net", ipam_driver="calico-ipam")
+                "specificipnet", subnet=subnet, driver="calico", ipam_driver="calico-ipam")
 
             workload = host.create_workload("workload1",
                                               network=network,

@@ -49,5 +49,5 @@ class TestErrors(TestBase):
             host.execute(run_plugin_command)
 
             # Create network using calico for network driver ONLY
-            network = host.create_network("shouldfailnet", driver="calico-net")
+            network = host.create_network("shouldfailnet", driver="calico")
             # TODO Assert

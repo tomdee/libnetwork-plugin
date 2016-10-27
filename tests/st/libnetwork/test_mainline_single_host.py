@@ -53,7 +53,7 @@ class TestMainline(TestBase):
             host.execute(run_plugin_command)
 
             # Set up two endpoints on one host
-            network = host.create_network("testnet", driver="calico-net")
+            network = host.create_network("testnet", driver="calico")
             workload1 = host.create_workload("workload1", network=network)
             workload2 = host.create_workload("workload2", network=network)
 
