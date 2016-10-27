@@ -78,83 +78,6 @@ func (d NetworkDriver) GetCapabilities() (*network.CapabilitiesResponse, error) 
 
 func (d NetworkDriver) CreateNetwork(request *network.CreateNetworkRequest) error {
 	logutils.JSONMessage(d.logger, "CreateNetwork JSON=%s", request)
-
-	profile := api.NewProfile()
-	profile.Metadata.Name = request.NetworkID
-	profile.Spec.Tags = []string{request.NetworkID}
-	profile.Spec.EgressRules = []api.Rule{{Action: "allow"}}
-	profile.Spec.IngressRules = []api.Rule{{Action: "allow", Source: api.EntityRule{Tag: request.NetworkID}}}
-	profile, err := d.client.Profiles().Create(profile)
-	if err != nil {
-		err = errors.Wrapf(err, "Profile creation error, data: %+v", profile)
-		d.logger.Println(err)
-		return err
-	}
-
-	IPData := map[string][]*network.IPAMData{
-		IPv4: request.IPv4Data,
-		IPv6: request.IPv6Data,
-	}
-
-	for version, data := range IPData {
-		// Extract the gateway and pool from the network data.  If this
-		// indicates that Calico IPAM is not being used, then create a Calico
-		// IP pool.
-		gateway, pool, err := networkutils.GetGatewayPool(d.logger, data, version)
-		if err != nil {
-			err = errors.Wrapf(
-				err, "Gateway pool getting error, data = %v, version = %v", data, version)
-			d.logger.Println(err)
-			return err
-		}
-		if gateway == nil {
-			continue
-		}
-		// If we aren't using Calico IPAM then we need to ensure an IP pool
-		// exists.  IPIP and Masquerade options can be included on the network
-		// create as additional options.  Note that this IP Pool has ipam=False
-		// to ensure it is not used in Calico IPAM assignment.
-		if !networkutils.IsUsingCalicoIpam(gateway, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6) {
-			var spec = api.PoolSpec{Disabled: false}
-
-			if optionsInterface, ok := request.Options["com.docker.network.generic"]; ok {
-				if options, ok := optionsInterface.(map[string]interface{}); !ok {
-					if ipipInterface, ok := options["ipip"]; ok {
-						ipip, ok := ipipInterface.(bool)
-						if ok {
-							spec.IPIP = &api.IPIPConfiguration{Enabled: ipip}
-						}
-					}
-					if masqueradeInterface, ok := options["nat-outgoing"]; !ok {
-						masquerade, ok := masqueradeInterface.(bool)
-						if ok {
-							spec.NATOutgoing = masquerade
-						}
-					}
-				}
-			}
-
-			pool := &api.Pool{
-				Metadata: api.PoolMetadata{CIDR: *pool},
-				Spec:     spec,
-			}
-
-			_, err := d.client.Pools().Create(pool)
-
-			if err != nil {
-				err = errors.Wrapf(err, "Pool creation error, data = %v", *pool)
-				return err
-			}
-		}
-	}
-
-	err = d.datastore.WriteNetwork(request.NetworkID, datastore.Network{
-		NetworkID: request.NetworkID,
-		Options:   request.Options,
-		IPv4Data:  request.IPv4Data,
-		IPv6Data:  request.IPv6Data,
-	})
-
 	logutils.JSONMessage(d.logger, "CreateNetwork response JSON=%v", map[string]string{})
 	return nil
 }
@@ -319,35 +242,6 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		return nil, err
 	}
 
-	var (
-		networkData *datastore.Network
-		gatewayV4   *caliconet.IPNet
-		gatewayV6   *caliconet.IPNet
-	)
-
-	if networkData, err = d.datastore.GetNetwork(request.NetworkID); err != nil {
-		err = errors.Wrapf(err, "Error while getting network %v", request.NetworkID)
-		d.logger.Printf("Error getting network: %v", err)
-		return nil, err
-	}
-
-	// Extract relevant data from the Network data.
-	if gatewayV4, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv4Data, IPv4); err != nil {
-		err = errors.Wrapf(err, "Error while getting gateway pool for %+v, %v", networkData.IPv4Data, IPv4)
-		d.logger.Println(err)
-		return nil, err
-	}
-	if gatewayV6, _, err = networkutils.GetGatewayPool(d.logger, networkData.IPv6Data, IPv6); err != nil {
-		err = errors.Wrapf(err, "Error while getting gateway pool for %+v, %v", networkData.IPv6Data, IPv6)
-		d.logger.Printf("Error getting gateway pool V6: %v", err)
-		return nil, err
-	}
-
-	useV4 := gatewayV4 != nil &&
-		networkutils.IsUsingCalicoIpam(gatewayV4, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6)
-	useV6 := gatewayV6 != nil &&
-		networkutils.IsUsingCalicoIpam(gatewayV6, d.metadata.gatewayCIDRV4, d.metadata.gatewayCIDRV6)
-
 	resp := &network.JoinResponse{
 		InterfaceName: network.InterfaceName{
 			SrcName:   tempInterfaceName,
@@ -355,52 +249,64 @@ func (d NetworkDriver) Join(request *network.JoinRequest) (*network.JoinResponse
 		},
 	}
 
-	if useV4 || useV6 {
-		// One of the network gateway addresses indicate that we are using
-		// Calico IPAM driver.  In this case we setup routes using the gateways
-		// configured on the endpoint (which will be our host IPs).
-		d.logger.Println("Using Calico IPAM driver, configure gateway and " +
-			"static routes to the host")
-		if gatewayV4 != nil {
-			resp.Gateway = d.metadata.DummyIpV4Nexthop
-			resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
-				Destination: d.metadata.DummyIpV4Nexthop + "/32",
-				RouteType:   1,
-				NextHop:     "",
-			})
+	endpoints, err := d.client.WorkloadEndpoints().List(api.WorkloadEndpointMetadata{})
+	if err != nil {
+		err = errors.Wrap(err, "Workload endpoints listing error")
+		d.logger.Println(err)
+		return nil, err
+	}
+	var useV4, useV6 bool
+
+	for _, endpoint := range endpoints.Items {
+		for _, ipNetwork := range endpoint.Spec.IPNetworks {
+			if ipNetwork.IPNet.IP.To4() != nil {
+				useV4 = true
+			} else {
+				useV6 = true
+			}
 		}
-		if gatewayV6 != nil {
-			// Here, we'll report the link local address of the host's cali interface to libnetwork
-			// as our IPv6 gateway. IPv6 link local addresses are automatically assigned to interfaces
-			// when they are brought up. Unfortunately, the container link must be up as well. So
-			// bring it up now
-			if err = netns.BringUpInterface(tempInterfaceName); err != nil {
-				err = errors.Wrapf(err, "Error while bringing up interface %v", tempInterfaceName)
-				return nil, err
-			}
-			// Then extract the link local address that was just assigned to our host's interface
-			nextHop6, err := netns.GetIPv6LinkLocal(hostInterfaceName)
-			if err != nil {
-				err = errors.Wrapf(err, "Error while getting ipv6 local link for %v", hostInterfaceName)
-				return nil, err
-			}
-			resp.GatewayIPv6 = string(nextHop6)
-			var destination *caliconet.IPNet
-			if _, destination, err = caliconet.ParseCIDR(string(nextHop6)); err != nil {
-				err = errors.Wrapf(err, "Error while parsing CIDR out of %v", nextHop6)
-				return nil, err
-			}
-			resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
-				Destination: fmt.Sprintf("%v", destination),
-				RouteType:   1,
-				NextHop:     "",
-			})
+	}
+
+	// One of the network gateway addresses indicate that we are using
+	// Calico IPAM driver.  In this case we setup routes using the gateways
+	// configured on the endpoint (which will be our host IPs).
+	d.logger.Println("Using Calico IPAM driver, configure gateway and " +
+		"static routes to the host")
+
+	if useV4 {
+		resp.Gateway = d.metadata.DummyIpV4Nexthop
+		resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
+			Destination: d.metadata.DummyIpV4Nexthop + "/32",
+			RouteType:   1,
+			NextHop:     "",
+		})
+	}
+	if useV6 {
+		// Here, we'll report the link local address of the host's cali interface to libnetwork
+		// as our IPv6 gateway. IPv6 link local addresses are automatically assigned to interfaces
+		// when they are brought up. Unfortunately, the container link must be up as well. So
+		// bring it up now
+		if err = netns.BringUpInterface(tempInterfaceName); err != nil {
+			err = errors.Wrapf(err, "Error while bringing up interface %v", tempInterfaceName)
+			return nil, err
 		}
-	} else {
-		// We are not using Calico IPAM driver, so configure blank gateways to
-		// set up auto-gateway behavior.
-		// Default empty values for Gateway and GatewayIPv6 are used.
-		d.logger.Println("Not using Calico IPAM driver")
+		// Then extract the link local address that was just assigned to our host's interface
+		nextHop6, err := netns.GetIPv6LinkLocal(hostInterfaceName)
+		if err != nil {
+			err = errors.Wrapf(err, "Error while getting ipv6 local link for %v", hostInterfaceName)
+			return nil, err
+		}
+		resp.GatewayIPv6 = string(nextHop6)
+		var destination *caliconet.IPNet
+		if _, destination, err = caliconet.ParseCIDR(string(nextHop6)); err != nil {
+			err = errors.Wrapf(err, "Error while parsing CIDR out of %v", nextHop6)
+			return nil, err
+		}
+		resp.StaticRoutes = append(resp.StaticRoutes, &network.StaticRoute{
+			Destination: fmt.Sprintf("%v", destination),
+			RouteType:   1,
+			NextHop:     "",
+		})
 	}
 
 	logutils.JSONMessage(d.logger, "Join Response JSON=%v", resp)
