@@ -1,10 +1,6 @@
 .git
 vendor
-*.tgz
 *.tar
-venv
 build
-busybox.tar
-calico-node.tar
 default.etcd
 .semaphore-cache

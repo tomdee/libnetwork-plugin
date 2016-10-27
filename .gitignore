@@ -9,10 +9,8 @@ env
 *~
 .coverage
 cover
-calicobuild.created
-caliconode.created
 calicoctl
 *.tar
+*.created
 libnetwork-plugin
-main
 
